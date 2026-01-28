@@ -103,9 +103,27 @@ export function useAppStore() {
       const userId = prev.currentUser.id;
       const game = prev.balanceGame.active;
       
-      // Already voted
-      if (game.votesA.includes(userId) || game.votesB.includes(userId)) {
-        return prev;
+      const isInA = game.votesA.includes(userId);
+      const isInB = game.votesB.includes(userId);
+
+      let newVotesA = game.votesA;
+      let newVotesB = game.votesB;
+
+      // 같은 옵션 클릭 시 취소 (토글)
+      if (option === 'A' && isInA) {
+        newVotesA = game.votesA.filter(id => id !== userId);
+      } else if (option === 'B' && isInB) {
+        newVotesB = game.votesB.filter(id => id !== userId);
+      } else {
+        // 다른 옵션으로 변경하거나 새로 투표
+        newVotesA = isInA ? game.votesA.filter(id => id !== userId) : game.votesA;
+        newVotesB = isInB ? game.votesB.filter(id => id !== userId) : game.votesB;
+        
+        if (option === 'A') {
+          newVotesA = [...newVotesA, userId];
+        } else {
+          newVotesB = [...newVotesB, userId];
+        }
       }
 
       return {
@@ -114,8 +132,8 @@ export function useAppStore() {
           ...prev.balanceGame,
           active: {
             ...game,
-            votesA: option === 'A' ? [...game.votesA, userId] : game.votesA,
-            votesB: option === 'B' ? [...game.votesB, userId] : game.votesB,
+            votesA: newVotesA,
+            votesB: newVotesB,
           },
         },
       };
