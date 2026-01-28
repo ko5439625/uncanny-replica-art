@@ -12,6 +12,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { toast } from 'sonner';
+import { ADMIN_PASSWORD, MEMBER_PASSWORD } from '@/types';
 
 const WELCOME_MESSAGES = [
   "오늘도 왔구나, {nickname}! 🎉",
@@ -20,8 +21,6 @@ const WELCOME_MESSAGES = [
   "{nickname} 등장! 모두 주목~ 🌟",
   "{nickname}~ 오늘도 힘내자! ✨",
 ];
-
-const PASSWORD = "0520";
 
 export default function LoginPage() {
   const navigate = useNavigate();
@@ -36,19 +35,31 @@ export default function LoginPage() {
       return;
     }
 
-    if (password !== PASSWORD) {
+    const user = data.users.find(u => u.id === Number(selectedUserId));
+    if (!user) {
+      setError('사용자를 찾을 수 없어요');
+      return;
+    }
+
+    // 관리자 계정은 다른 비밀번호
+    const requiredPassword = user.isAdmin ? ADMIN_PASSWORD : MEMBER_PASSWORD;
+    
+    if (password !== requiredPassword) {
       setError('비밀번호가 틀렸어요 😢');
       return;
     }
 
-    const user = data.users.find(u => u.id === Number(selectedUserId));
-    if (user) {
-      login(user.id);
-      const message = WELCOME_MESSAGES[Math.floor(Math.random() * WELCOME_MESSAGES.length)]
-        .replace('{nickname}', user.nickname);
-      toast.success(message);
-      navigate('/main');
-    }
+    login(user.id);
+    const message = WELCOME_MESSAGES[Math.floor(Math.random() * WELCOME_MESSAGES.length)]
+      .replace('{nickname}', user.nickname);
+    toast.success(message);
+    navigate('/main');
+  };
+
+  const handleCancel = () => {
+    setSelectedUserId('');
+    setPassword('');
+    setError('');
   };
 
   return (
@@ -84,10 +95,11 @@ export default function LoginPage() {
               <SelectTrigger className="w-full h-12 rounded-xl bg-background border-border text-body">
                 <SelectValue placeholder="닉네임 선택" />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="bg-background border-border z-50">
                 {data.users.map(user => (
                   <SelectItem key={user.id} value={String(user.id)}>
                     {user.emoji} {user.nickname}
+                    {user.isAdmin && <span className="ml-2 text-muted-foreground">(관리자)</span>}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -119,12 +131,21 @@ export default function LoginPage() {
             </motion.p>
           )}
 
-          <Button
-            onClick={handleLogin}
-            className="w-full h-12 rounded-xl text-body font-semibold btn-press"
-          >
-            로그인
-          </Button>
+          <div className="flex gap-3">
+            <Button
+              variant="outline"
+              onClick={handleCancel}
+              className="flex-1 h-12 rounded-xl text-body"
+            >
+              취소
+            </Button>
+            <Button
+              onClick={handleLogin}
+              className="flex-1 h-12 rounded-xl text-body font-semibold btn-press"
+            >
+              로그인
+            </Button>
+          </div>
         </motion.div>
 
         {/* Hint */}
