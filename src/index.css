@@ -1,6 +1,10 @@
 @import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css');
 
+@import url('https://fonts.googleapis.com/css2?family=Pretendard:wght@400;500;600;700&display=swap');
+
 @tailwind base;
+@tailwind components;
+@tailwind utilities;
 @tailwind components;
 @tailwind utilities;
 
@@ -40,6 +44,10 @@
     --border: 0 0% 90%;
     --input: 0 0% 90%;
     --ring: 0 0% 8%;
+
+    /* iMessage Blue for chat bubbles */
+    --imessage-blue: 211 100% 50%;
+    --imessage-gray: 0 0% 90%;
 
     --radius: 0.75rem;
 
@@ -81,6 +89,10 @@
     --border: 0 0% 18%;
     --input: 0 0% 18%;
     --ring: 0 0% 100%;
+
+    /* iMessage Blue for dark mode */
+    --imessage-blue: 211 100% 50%;
+    --imessage-gray: 0 0% 25%;
   }
 }
 

@@ -1,6 +1,6 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Plus, Heart, ChevronDown, ChevronRight, Send } from 'lucide-react';
+import { Plus, Heart, ChevronDown, ChevronRight, Send, Clock } from 'lucide-react';
 import Header from '@/components/Header';
 import { useApp } from '@/contexts/AppContext';
 import { cn } from '@/lib/utils';
@@ -15,6 +15,9 @@ import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
 
 type Tab = 'anonymous' | 'nickname';
+
+const ONE_DAY_MS = 24 * 60 * 60 * 1000;
+const THREE_DAYS_MS = 3 * ONE_DAY_MS;
 
 function formatTimeAgo(timestamp: string): string {
   const diff = Date.now() - new Date(timestamp).getTime();
@@ -33,6 +36,14 @@ function formatTimeAgo(timestamp: string): string {
   return '방금 전';
 }
 
+function isOlderThanOneDay(timestamp: string): boolean {
+  return Date.now() - new Date(timestamp).getTime() > ONE_DAY_MS;
+}
+
+function isWithinThreeDays(timestamp: string): boolean {
+  return Date.now() - new Date(timestamp).getTime() <= THREE_DAYS_MS;
+}
+
 export default function TMIPage() {
   const { data, addAnonymousPost, likeAnonymousPost, addUserPost, reactToUserPost } = useApp();
   const [activeTab, setActiveTab] = useState<Tab>('anonymous');
@@ -40,6 +51,7 @@ export default function TMIPage() {
   const [newContent, setNewContent] = useState('');
   const [expandedUsers, setExpandedUsers] = useState<number[]>([]);
   const [anonymousInput, setAnonymousInput] = useState('');
+  const [showOldMessages, setShowOldMessages] = useState(false);
   const chatEndRef = useRef<HTMLDivElement>(null);
 
   // 익명 채팅 스크롤 하단으로
@@ -75,25 +87,30 @@ export default function TMIPage() {
     );
   };
 
-  // 모든 사용자의 게시물 (관리자 제외, 게시물 있는 사람만)
+  // 모든 사용자의 게시물 (관리자 제외)
   const postsByUser = data.users
-    .filter(u => !u.isAdmin) // 관리자 제외
+    .filter(u => !u.isAdmin)
     .map(user => ({
       user,
       posts: data.tmiPosts.byUser.filter(p => p.userId === user.id),
     }))
     .sort((a, b) => {
-      // 현재 유저 먼저
       if (a.user.id === data.currentUser?.id) return -1;
       if (b.user.id === data.currentUser?.id) return 1;
-      // 게시물 많은 순
       return b.posts.length - a.posts.length;
     });
 
-  // 익명 게시물 시간순 정렬 (오래된 것이 위에)
-  const sortedAnonymousPosts = [...data.tmiPosts.anonymous].sort(
-    (a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
-  );
+  // 익명 게시물 분류 (3일 이내만 보관)
+  const { recentPosts, oldPosts } = useMemo(() => {
+    const validPosts = data.tmiPosts.anonymous.filter(p => isWithinThreeDays(p.timestamp));
+    const recent = validPosts.filter(p => !isOlderThanOneDay(p.timestamp));
+    const old = validPosts.filter(p => isOlderThanOneDay(p.timestamp));
+    
+    return {
+      recentPosts: recent.sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()),
+      oldPosts: old.sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()),
+    };
+  }, [data.tmiPosts.anonymous]);
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
@@ -128,68 +145,63 @@ export default function TMIPage() {
               exit={{ opacity: 0 }}
               className="flex-1 flex flex-col min-h-0"
             >
-              {/* Chat Messages - iPhone Style */}
-              <div className="flex-1 overflow-y-auto space-y-3 pb-4 min-h-[400px] max-h-[60vh]">
-                {sortedAnonymousPosts.length === 0 ? (
+              {/* Chat Messages - iMessage Style */}
+              <div className="flex-1 overflow-y-auto space-y-3 pb-4 min-h-[400px] max-h-[60vh] custom-scrollbar">
+                {/* Old Messages Toggle */}
+                {oldPosts.length > 0 && (
+                  <button
+                    onClick={() => setShowOldMessages(!showOldMessages)}
+                    className="w-full flex items-center justify-center gap-2 py-2 text-small text-muted-foreground hover:text-foreground transition-colors"
+                  >
+                    <Clock className="w-4 h-4" />
+                    {showOldMessages ? '지난 이야기 숨기기' : `지난 이야기 보기 (${oldPosts.length}개)`}
+                    <ChevronDown className={cn('w-4 h-4 transition-transform', showOldMessages && 'rotate-180')} />
+                  </button>
+                )}
+
+                {/* Old Messages */}
+                <AnimatePresence>
+                  {showOldMessages && oldPosts.map(post => (
+                    <MessageBubble
+                      key={post.id}
+                      post={post}
+                      isMyPost={post.authorId === data.currentUser?.id}
+                      hasLiked={data.currentUser ? post.likedBy.includes(data.currentUser.id) : false}
+                      onLike={() => likeAnonymousPost(post.id)}
+                      isOld
+                    />
+                  ))}
+                </AnimatePresence>
+
+                {/* Divider */}
+                {showOldMessages && oldPosts.length > 0 && recentPosts.length > 0 && (
+                  <div className="flex items-center gap-3 py-2">
+                    <div className="flex-1 border-t border-border" />
+                    <span className="text-small text-muted-foreground">오늘</span>
+                    <div className="flex-1 border-t border-border" />
+                  </div>
+                )}
+
+                {/* Recent Messages */}
+                {recentPosts.length === 0 && oldPosts.length === 0 ? (
                   <div className="flex items-center justify-center h-full">
                     <p className="text-muted-foreground">첫 번째 익명 메시지를 보내보세요!</p>
                   </div>
                 ) : (
-                  sortedAnonymousPosts.map(post => {
-                    const isMyPost = post.authorId === data.currentUser?.id;
-                    const hasLiked = data.currentUser 
-                      ? post.likedBy.includes(data.currentUser.id) 
-                      : false;
-
-                    return (
-                      <motion.div
-                        key={post.id}
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        className={cn(
-                          'flex',
-                          isMyPost ? 'justify-end' : 'justify-start'
-                        )}
-                      >
-                        <div className={cn(
-                          'max-w-[80%] group',
-                          isMyPost ? 'items-end' : 'items-start'
-                        )}>
-                          <div className={cn(
-                            'px-4 py-2.5 rounded-2xl',
-                            isMyPost 
-                              ? 'bg-foreground text-background rounded-br-md' 
-                              : 'bg-secondary text-foreground rounded-bl-md'
-                          )}>
-                            <p className="text-body leading-relaxed">{post.content}</p>
-                          </div>
-                          <div className={cn(
-                            'flex items-center gap-2 mt-1 px-1',
-                            isMyPost ? 'flex-row-reverse' : 'flex-row'
-                          )}>
-                            <span className="text-[11px] text-muted-foreground">
-                              {formatTimeAgo(post.timestamp)}
-                            </span>
-                            <button
-                              onClick={() => likeAnonymousPost(post.id)}
-                              className={cn(
-                                'flex items-center gap-1 text-[11px] transition-colors',
-                                hasLiked ? 'text-foreground' : 'text-muted-foreground hover:text-foreground'
-                              )}
-                            >
-                              <Heart className={cn('w-3 h-3', hasLiked && 'fill-current')} />
-                              {post.likes > 0 && post.likes}
-                            </button>
-                          </div>
-                        </div>
-                      </motion.div>
-                    );
-                  })
+                  recentPosts.map(post => (
+                    <MessageBubble
+                      key={post.id}
+                      post={post}
+                      isMyPost={post.authorId === data.currentUser?.id}
+                      hasLiked={data.currentUser ? post.likedBy.includes(data.currentUser.id) : false}
+                      onLike={() => likeAnonymousPost(post.id)}
+                    />
+                  ))
                 )}
                 <div ref={chatEndRef} />
               </div>
 
-              {/* Input Bar - iPhone Style */}
+              {/* Input Bar - iMessage Style */}
               <div className="border-t border-border pt-3 mt-auto">
                 <div className="flex gap-2 items-end">
                   <div className="flex-1 relative">
@@ -199,7 +211,7 @@ export default function TMIPage() {
                       onChange={e => setAnonymousInput(e.target.value)}
                       onKeyDown={e => e.key === 'Enter' && !e.shiftKey && handleSubmitAnonymous()}
                       placeholder="익명 메시지 입력..."
-                      className="w-full px-4 py-3 bg-secondary rounded-full text-body placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-foreground/20"
+                      className="w-full px-4 py-3 bg-[hsl(var(--imessage-gray))] rounded-full text-body placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-[hsl(var(--imessage-blue))]/30"
                     />
                   </div>
                   <button
@@ -208,13 +220,16 @@ export default function TMIPage() {
                     className={cn(
                       'p-3 rounded-full transition-colors',
                       anonymousInput.trim()
-                        ? 'bg-foreground text-background'
+                        ? 'bg-[hsl(var(--imessage-blue))] text-white'
                         : 'bg-secondary text-muted-foreground'
                     )}
                   >
                     <Send className="w-5 h-5" />
                   </button>
                 </div>
+                <p className="text-center text-[11px] text-muted-foreground mt-2">
+                  메시지는 24시간 후 지난 이야기로, 3일 후 자동 삭제돼요
+                </p>
               </div>
             </motion.div>
           ) : (
@@ -371,5 +386,58 @@ export default function TMIPage() {
         </div>
       </footer>
     </div>
+  );
+}
+
+// 메시지 버블 컴포넌트
+function MessageBubble({ 
+  post, 
+  isMyPost, 
+  hasLiked, 
+  onLike,
+  isOld = false 
+}: { 
+  post: { id: number; content: string; timestamp: string; likes: number };
+  isMyPost: boolean;
+  hasLiked: boolean;
+  onLike: () => void;
+  isOld?: boolean;
+}) {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: isOld ? 0.6 : 1, y: 0 }}
+      exit={{ opacity: 0, y: -10 }}
+      className={cn('flex', isMyPost ? 'justify-end' : 'justify-start')}
+    >
+      <div className={cn('max-w-[80%] group', isMyPost ? 'items-end' : 'items-start')}>
+        <div className={cn(
+          'px-4 py-2.5 rounded-2xl',
+          isMyPost 
+            ? 'bg-[hsl(var(--imessage-blue))] text-white rounded-br-md' 
+            : 'bg-[hsl(var(--imessage-gray))] text-foreground rounded-bl-md'
+        )}>
+          <p className="text-body leading-relaxed">{post.content}</p>
+        </div>
+        <div className={cn(
+          'flex items-center gap-2 mt-1 px-1',
+          isMyPost ? 'flex-row-reverse' : 'flex-row'
+        )}>
+          <span className="text-[11px] text-muted-foreground">
+            {formatTimeAgo(post.timestamp)}
+          </span>
+          <button
+            onClick={onLike}
+            className={cn(
+              'flex items-center gap-1 text-[11px] transition-colors',
+              hasLiked ? 'text-[hsl(var(--imessage-blue))]' : 'text-muted-foreground hover:text-foreground'
+            )}
+          >
+            <Heart className={cn('w-3 h-3', hasLiked && 'fill-current')} />
+            {post.likes > 0 && post.likes}
+          </button>
+        </div>
+      </div>
+    </motion.div>
   );
 }
