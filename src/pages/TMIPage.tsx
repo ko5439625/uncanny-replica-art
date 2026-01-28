@@ -12,6 +12,7 @@ import {
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
+import { toast } from 'sonner';
 
 type Tab = 'anonymous' | 'nickname';
 
@@ -40,12 +41,17 @@ export default function TMIPage() {
   const [expandedUsers, setExpandedUsers] = useState<number[]>([]);
 
   const handleSubmit = () => {
-    if (!newContent.trim()) return;
+    if (!newContent.trim()) {
+      toast.error('내용을 입력해주세요!');
+      return;
+    }
     
     if (activeTab === 'anonymous') {
       addAnonymousPost(newContent.trim());
+      toast.success('익명 TMI가 올라갔어요! 🎭');
     } else {
       addUserPost(newContent.trim());
+      toast.success('TMI가 올라갔어요! ✨');
     }
     
     setNewContent('');
@@ -60,11 +66,20 @@ export default function TMIPage() {
     );
   };
 
-  // Group posts by user
-  const postsByUser = data.users.map(user => ({
-    user,
-    posts: data.tmiPosts.byUser.filter(p => p.userId === user.id),
-  })).filter(item => item.posts.length > 0 || item.user.id === data.currentUser?.id);
+  // Group posts by user - include all users with posts, plus current user
+  const postsByUser = data.users
+    .map(user => ({
+      user,
+      posts: data.tmiPosts.byUser.filter(p => p.userId === user.id),
+    }))
+    .filter(item => item.posts.length > 0 || item.user.id === data.currentUser?.id)
+    .sort((a, b) => {
+      // Current user first
+      if (a.user.id === data.currentUser?.id) return -1;
+      if (b.user.id === data.currentUser?.id) return 1;
+      // Then by post count
+      return b.posts.length - a.posts.length;
+    });
 
   return (
     <div className="min-h-screen bg-background">
@@ -74,15 +89,15 @@ export default function TMIPage() {
         {/* Page Title & Write Button */}
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h2 className="text-h2 text-foreground">TMI 게시판 💬</h2>
+            <h2 className="text-2xl font-bold text-foreground">TMI</h2>
             <p className="text-caption text-muted-foreground">일상을 공유해보세요</p>
           </div>
           <Button
             onClick={() => setIsModalOpen(true)}
-            className="rounded-xl gap-2"
+            className="rounded-lg gap-2"
           >
             <Plus className="w-4 h-4" />
-            TMI 쓰기
+            글쓰기
           </Button>
         </div>
 
@@ -93,13 +108,13 @@ export default function TMIPage() {
               key={tab}
               onClick={() => setActiveTab(tab)}
               className={cn(
-                'px-4 py-2 rounded-full text-body font-medium transition-all',
+                'px-4 py-2 rounded-lg text-body font-medium transition-all border',
                 activeTab === tab
-                  ? 'bg-primary text-primary-foreground'
-                  : 'bg-muted text-muted-foreground hover:bg-muted/80'
+                  ? 'bg-foreground text-background border-foreground'
+                  : 'bg-background text-muted-foreground border-border hover:border-foreground'
               )}
             >
-              {tab === 'anonymous' ? '👤 익명' : '😊 닉네임'}
+              {tab === 'anonymous' ? '익명' : '닉네임'}
             </button>
           ))}
         </div>
@@ -115,10 +130,13 @@ export default function TMIPage() {
               className="grid gap-4 md:grid-cols-2"
             >
               {data.tmiPosts.anonymous.length === 0 ? (
-                <div className="md:col-span-2 text-center py-16 bg-card rounded-2xl shadow-soft">
-                  <p className="text-4xl mb-4">😢</p>
+                <div className="md:col-span-2 text-center py-16 border border-dashed border-border rounded-2xl">
+                  <p className="text-4xl mb-4">📝</p>
                   <p className="text-muted-foreground">아직 TMI가 없어요</p>
-                  <p className="text-caption text-muted-foreground">첫 번째 TMI를 올려보세요!</p>
+                  <p className="text-caption text-muted-foreground mb-4">첫 번째 TMI를 올려보세요!</p>
+                  <Button onClick={() => setIsModalOpen(true)} variant="outline" className="rounded-lg">
+                    TMI 쓰기
+                  </Button>
                 </div>
               ) : (
                 data.tmiPosts.anonymous.map(post => (
@@ -126,10 +144,10 @@ export default function TMIPage() {
                     key={post.id}
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="bg-card rounded-2xl p-5 shadow-soft"
+                    className="bg-card border border-border rounded-xl p-5"
                   >
                     <div className="flex items-center gap-2 mb-3">
-                      <span className="w-10 h-10 bg-muted rounded-full flex items-center justify-center text-xl">
+                      <span className="w-10 h-10 bg-secondary rounded-full flex items-center justify-center text-xl">
                         👤
                       </span>
                       <span className="text-body font-medium text-muted-foreground">익명</span>
@@ -142,10 +160,10 @@ export default function TMIPage() {
                       <button
                         onClick={() => likeAnonymousPost(post.id)}
                         className={cn(
-                          'flex items-center gap-1.5 px-3 py-1.5 rounded-full transition-colors',
+                          'flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-colors border',
                           data.currentUser && post.likedBy.includes(data.currentUser.id)
-                            ? 'bg-primary/10 text-primary'
-                            : 'bg-muted text-muted-foreground hover:text-primary'
+                            ? 'bg-foreground text-background border-foreground'
+                            : 'bg-background text-muted-foreground border-border hover:border-foreground'
                         )}
                       >
                         <Heart className={cn(
@@ -168,9 +186,13 @@ export default function TMIPage() {
               className="space-y-3"
             >
               {postsByUser.length === 0 ? (
-                <div className="text-center py-16 bg-card rounded-2xl shadow-soft">
-                  <p className="text-4xl mb-4">😢</p>
+                <div className="text-center py-16 border border-dashed border-border rounded-2xl">
+                  <p className="text-4xl mb-4">📝</p>
                   <p className="text-muted-foreground">아직 TMI가 없어요</p>
+                  <p className="text-caption text-muted-foreground mb-4">첫 번째 TMI를 올려보세요!</p>
+                  <Button onClick={() => setIsModalOpen(true)} variant="outline" className="rounded-lg">
+                    TMI 쓰기
+                  </Button>
                 </div>
               ) : (
                 postsByUser.map(({ user, posts }) => {
@@ -178,10 +200,10 @@ export default function TMIPage() {
                   const isCurrentUser = data.currentUser?.id === user.id;
 
                   return (
-                    <div key={user.id} className="bg-card rounded-2xl shadow-soft overflow-hidden">
+                    <div key={user.id} className="border border-border rounded-xl overflow-hidden">
                       <button
                         onClick={() => toggleUser(user.id)}
-                        className="w-full flex items-center justify-between p-4 hover:bg-muted/50 transition-colors"
+                        className="w-full flex items-center justify-between p-4 hover:bg-secondary transition-colors"
                       >
                         <div className="flex items-center gap-3">
                           {isExpanded ? (
@@ -190,8 +212,11 @@ export default function TMIPage() {
                             <ChevronRight className="w-5 h-5 text-muted-foreground" />
                           )}
                           <span className="text-2xl">{user.emoji}</span>
-                          <span className="text-body font-medium">{user.nickname}님</span>
-                          <span className="px-2 py-0.5 bg-muted rounded-full text-small text-muted-foreground">
+                          <span className="text-body font-medium">
+                            {user.nickname}
+                            {isCurrentUser && <span className="text-muted-foreground ml-1">(나)</span>}
+                          </span>
+                          <span className="px-2 py-0.5 bg-secondary rounded text-small text-muted-foreground">
                             {posts.length}개
                           </span>
                         </div>
@@ -206,15 +231,27 @@ export default function TMIPage() {
                             className="border-t border-border"
                           >
                             {posts.length === 0 ? (
-                              <p className="p-4 text-center text-caption text-muted-foreground">
-                                아직 TMI가 없어요
-                              </p>
+                              <div className="p-6 text-center">
+                                <p className="text-caption text-muted-foreground mb-3">
+                                  아직 TMI가 없어요
+                                </p>
+                                {isCurrentUser && (
+                                  <Button
+                                    onClick={() => setIsModalOpen(true)}
+                                    variant="outline"
+                                    size="sm"
+                                    className="rounded-lg"
+                                  >
+                                    첫 TMI 쓰기
+                                  </Button>
+                                )}
+                              </div>
                             ) : (
                               <div className="divide-y divide-border">
                                 {posts.map(post => (
                                   <div key={post.id} className="p-4">
                                     <p className="text-small text-muted-foreground mb-2">
-                                      📅 {post.date}
+                                      {post.date}
                                     </p>
                                     <p className="text-body text-foreground mb-3 leading-relaxed">
                                       {post.content}
@@ -231,10 +268,10 @@ export default function TMIPage() {
                                             key={emoji}
                                             onClick={() => reactToUserPost(post.id, emoji)}
                                             className={cn(
-                                              'flex items-center gap-1.5 px-3 py-1.5 rounded-full text-caption transition-colors',
+                                              'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-caption transition-colors border',
                                               hasReacted
-                                                ? 'bg-primary/10 text-primary'
-                                                : 'bg-muted text-muted-foreground hover:bg-primary/5'
+                                                ? 'bg-foreground text-background border-foreground'
+                                                : 'bg-background text-muted-foreground border-border hover:border-foreground'
                                             )}
                                           >
                                             <span>{emoji}</span>
@@ -245,18 +282,18 @@ export default function TMIPage() {
                                     </div>
                                   </div>
                                 ))}
-                              </div>
-                            )}
 
-                            {isCurrentUser && (
-                              <div className="p-4 border-t border-border bg-muted/30">
-                                <Button
-                                  onClick={() => setIsModalOpen(true)}
-                                  variant="outline"
-                                  className="w-full rounded-xl border-dashed"
-                                >
-                                  + 나의 TMI 추가하기
-                                </Button>
+                                {isCurrentUser && (
+                                  <div className="p-4 bg-secondary/50">
+                                    <Button
+                                      onClick={() => setIsModalOpen(true)}
+                                      variant="outline"
+                                      className="w-full rounded-lg border-dashed"
+                                    >
+                                      + TMI 추가하기
+                                    </Button>
+                                  </div>
+                                )}
                               </div>
                             )}
                           </motion.div>
@@ -273,34 +310,42 @@ export default function TMIPage() {
 
       {/* Write Modal */}
       <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-        <DialogContent className="rounded-2xl max-w-md mx-4">
+        <DialogContent className="rounded-xl max-w-md mx-4">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2 text-h3">
-              <span>오늘의 TMI</span>
-              <span>💭</span>
+            <DialogTitle className="text-xl font-bold">
+              {activeTab === 'anonymous' ? '익명 TMI 쓰기' : 'TMI 쓰기'}
             </DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
+            <div className="text-caption text-muted-foreground">
+              {activeTab === 'anonymous' 
+                ? '익명으로 올라가요. 누군지 아무도 몰라요! 🎭'
+                : `${data.currentUser?.emoji} ${data.currentUser?.nickname}님으로 올라가요`
+              }
+            </div>
             <Textarea
               value={newContent}
               onChange={e => setNewContent(e.target.value)}
               placeholder="오늘 있었던 일, 생각, 느낌... 뭐든지 좋아요!"
-              className="min-h-[140px] rounded-xl resize-none text-body"
+              className="min-h-[140px] rounded-lg resize-none text-body"
             />
             <div className="flex gap-2">
               <Button
                 variant="outline"
-                onClick={() => setIsModalOpen(false)}
-                className="flex-1 rounded-xl"
+                onClick={() => {
+                  setNewContent('');
+                  setIsModalOpen(false);
+                }}
+                className="flex-1 rounded-lg"
               >
                 취소
               </Button>
               <Button
                 onClick={handleSubmit}
                 disabled={!newContent.trim()}
-                className="flex-1 rounded-xl"
+                className="flex-1 rounded-lg"
               >
-                {activeTab === 'anonymous' ? '익명으로 올리기' : 'TMI 올리기'}
+                올리기
               </Button>
             </div>
           </div>
@@ -311,7 +356,7 @@ export default function TMIPage() {
       <footer className="border-t border-border mt-12 py-6">
         <div className="max-w-3xl mx-auto px-4 text-center">
           <p className="text-small text-muted-foreground">
-            🗨️ 스몰토크 • 우리 모임 전용 웹사이트
+            💬 Small Talk
           </p>
         </div>
       </footer>

@@ -59,16 +59,16 @@ export default function LoginPage() {
         transition={{ duration: 0.5 }}
         className="w-full max-w-sm space-y-8"
       >
-        {/* Illustration */}
+        {/* Logo */}
         <motion.div
           className="text-center"
           initial={{ scale: 0.8 }}
           animate={{ scale: 1 }}
           transition={{ delay: 0.2, type: 'spring', stiffness: 200 }}
         >
-          <div className="text-8xl mb-4 animate-bounce-soft">🎉</div>
-          <h1 className="text-h1 text-foreground">스몰토크</h1>
-          <p className="text-caption text-muted-foreground mt-1">Small Talk</p>
+          <div className="text-6xl mb-6">💬</div>
+          <h1 className="text-3xl font-bold text-foreground tracking-tight">Small Talk</h1>
+          <p className="text-caption text-muted-foreground mt-2">우리 모임 전용</p>
         </motion.div>
 
         {/* Login Form */}
@@ -81,7 +81,7 @@ export default function LoginPage() {
           <div className="space-y-2">
             <label className="text-caption text-muted-foreground">닉네임</label>
             <Select value={selectedUserId} onValueChange={setSelectedUserId}>
-              <SelectTrigger className="w-full h-12 rounded-xl bg-card border-border text-body">
+              <SelectTrigger className="w-full h-12 rounded-xl bg-background border-border text-body">
                 <SelectValue placeholder="닉네임 선택" />
               </SelectTrigger>
               <SelectContent>
@@ -105,7 +105,7 @@ export default function LoginPage() {
                 setError('');
               }}
               onKeyDown={e => e.key === 'Enter' && handleLogin()}
-              className="h-12 rounded-xl bg-card border-border text-body"
+              className="h-12 rounded-xl bg-background border-border text-body"
             />
           </div>
 
@@ -121,7 +121,7 @@ export default function LoginPage() {
 
           <Button
             onClick={handleLogin}
-            className="w-full h-12 rounded-xl bg-primary text-primary-foreground text-body font-semibold btn-press"
+            className="w-full h-12 rounded-xl text-body font-semibold btn-press"
           >
             로그인
           </Button>
@@ -134,7 +134,7 @@ export default function LoginPage() {
           animate={{ opacity: 1 }}
           transition={{ delay: 0.5 }}
         >
-          우리 모임 전용 앱이에요 💬
+          10명의 소규모 모임을 위한 공간
         </motion.p>
       </motion.div>
     </div>
