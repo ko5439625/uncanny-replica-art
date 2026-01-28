@@ -382,7 +382,7 @@ export default function TMIPage() {
       {/* Footer */}
       <footer className="border-t border-border py-4 mt-auto">
         <div className="max-w-3xl mx-auto px-4 text-center">
-          <p className="text-small text-muted-foreground">💬 Small Talk</p>
+          <p className="text-small text-muted-foreground">💬 잠깐, 이거 맞아?</p>
         </div>
       </footer>
     </div>

@@ -53,7 +53,7 @@ export default function MainPage() {
       <footer className="border-t border-border mt-12 py-6">
         <div className="max-w-3xl mx-auto px-4 text-center">
           <p className="text-small text-muted-foreground">
-            💬 Small Talk
+            💬 잠깐, 이거 맞아?
           </p>
         </div>
       </footer>
