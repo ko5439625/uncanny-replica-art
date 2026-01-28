@@ -72,8 +72,8 @@ export default function LoginPage() {
           transition={{ delay: 0.2, type: 'spring', stiffness: 200 }}
         >
           <div className="text-6xl mb-6">💬</div>
-          <h1 className="text-3xl font-bold text-foreground tracking-tight">Small Talk</h1>
-          <p className="text-caption text-muted-foreground mt-2">우리 모임 전용</p>
+          <h1 className="text-3xl font-bold text-foreground tracking-tight">잠깐, 이거 맞아?</h1>
+          <p className="text-caption text-muted-foreground mt-2">우리 모임 전용 공간</p>
         </motion.div>
 
         {/* Login Form */}
@@ -127,7 +127,7 @@ export default function LoginPage() {
 
           <Button
             onClick={handleLogin}
-            className="w-full h-12 rounded-xl text-body font-semibold btn-press"
+            className="w-full h-12 rounded-xl text-body font-semibold btn-press bg-foreground text-background hover:bg-foreground/90"
           >
             로그인
           </Button>

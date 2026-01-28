@@ -30,7 +30,7 @@ export default function Header({ showNav = true }: HeaderProps) {
         <div className="flex items-center justify-between py-4">
           <div className="flex items-center gap-3">
             <span className="text-2xl">💬</span>
-            <span className="text-xl font-bold text-foreground tracking-tight">Small Talk</span>
+            <span className="text-xl font-bold text-foreground tracking-tight">잠깐, 이거 맞아?</span>
           </div>
 
           {data.currentUser && (
