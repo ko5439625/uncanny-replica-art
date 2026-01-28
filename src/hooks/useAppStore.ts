@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { AppData, INITIAL_DATA, User, Rule, BalanceGame, AnonymousPost, UserPost } from '@/types';
+import { AppData, INITIAL_DATA, User, Rule, BalanceGame, AnonymousPost, UserPost, ADMIN_USER } from '@/types';
 
 const STORAGE_KEY = 'smalltalk-data';
 
@@ -7,7 +7,15 @@ function loadData(): AppData {
   try {
     const stored = localStorage.getItem(STORAGE_KEY);
     if (stored) {
-      return JSON.parse(stored);
+      const parsed: AppData = JSON.parse(stored);
+      
+      // 관리자 계정이 없으면 자동으로 추가
+      const hasAdmin = parsed.users.some(u => u.id === ADMIN_USER.id);
+      if (!hasAdmin) {
+        parsed.users = [ADMIN_USER, ...parsed.users];
+      }
+      
+      return parsed;
     }
   } catch (e) {
     console.error('Failed to load data:', e);
