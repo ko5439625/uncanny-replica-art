@@ -42,12 +42,15 @@ export default function BalanceGame() {
       toast.error('로그인이 필요해요');
       return;
     }
-    if (hasVoted) {
-      toast.error('이미 투표했어요!');
+    // 이미 같은 옵션에 투표한 경우 취소
+    if (userVote === option) {
+      voteBalanceGame(option); // 토글로 취소
+      toast.success('투표 취소됨');
       return;
     }
+    // 다른 옵션으로 변경하거나 새로 투표
     voteBalanceGame(option);
-    toast.success('투표 완료! 🗳️');
+    toast.success(hasVoted ? '선택 변경! 🔄' : '투표 완료! 🗳️');
   };
 
   return (
@@ -67,14 +70,11 @@ export default function BalanceGame() {
         <motion.button
           whileTap={{ scale: 0.98 }}
           onClick={() => handleVote('A')}
-          disabled={hasVoted}
           className={cn(
-            'p-4 rounded-lg border-2 transition-all relative overflow-hidden text-left',
+            'p-4 rounded-lg border-2 transition-all relative overflow-hidden text-left cursor-pointer',
             userVote === 'A'
               ? 'border-foreground bg-foreground text-background'
-              : hasVoted
-                ? 'border-border bg-secondary'
-                : 'border-border hover:border-foreground cursor-pointer'
+              : 'border-border hover:border-foreground'
           )}
         >
           <p className="text-body font-semibold mb-1">{game.optionA}</p>
@@ -98,14 +98,11 @@ export default function BalanceGame() {
         <motion.button
           whileTap={{ scale: 0.98 }}
           onClick={() => handleVote('B')}
-          disabled={hasVoted}
           className={cn(
-            'p-4 rounded-lg border-2 transition-all relative overflow-hidden text-left',
+            'p-4 rounded-lg border-2 transition-all relative overflow-hidden text-left cursor-pointer',
             userVote === 'B'
               ? 'border-foreground bg-foreground text-background'
-              : hasVoted
-                ? 'border-border bg-secondary'
-                : 'border-border hover:border-foreground cursor-pointer'
+              : 'border-border hover:border-foreground'
           )}
         >
           <p className="text-body font-semibold mb-1">{game.optionB}</p>
@@ -125,6 +122,13 @@ export default function BalanceGame() {
           )}
         </motion.button>
       </div>
+
+      {/* 변경 안내 */}
+      {hasVoted && (
+        <p className="text-center text-small text-muted-foreground mt-3">
+          다시 클릭하면 선택을 바꿀 수 있어요
+        </p>
+      )}
     </div>
   );
 }

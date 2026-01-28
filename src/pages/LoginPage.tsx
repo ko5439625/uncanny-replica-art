@@ -56,12 +56,6 @@ export default function LoginPage() {
     navigate('/main');
   };
 
-  const handleCancel = () => {
-    setSelectedUserId('');
-    setPassword('');
-    setError('');
-  };
-
   return (
     <div className="min-h-screen bg-background flex flex-col items-center justify-center p-6">
       <motion.div
@@ -131,21 +125,12 @@ export default function LoginPage() {
             </motion.p>
           )}
 
-          <div className="flex gap-3">
-            <Button
-              variant="outline"
-              onClick={handleCancel}
-              className="flex-1 h-12 rounded-xl text-body"
-            >
-              취소
-            </Button>
-            <Button
-              onClick={handleLogin}
-              className="flex-1 h-12 rounded-xl text-body font-semibold btn-press"
-            >
-              로그인
-            </Button>
-          </div>
+          <Button
+            onClick={handleLogin}
+            className="w-full h-12 rounded-xl text-body font-semibold btn-press"
+          >
+            로그인
+          </Button>
         </motion.div>
 
         {/* Hint */}
