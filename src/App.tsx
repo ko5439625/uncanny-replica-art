@@ -22,6 +22,21 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
 
+function AdminRoute({ children }: { children: React.ReactNode }) {
+  const { data } = useApp();
+  
+  if (!data.currentUser) {
+    return <Navigate to="/login" replace />;
+  }
+  
+  // 관리자만 접근 가능
+  if (!data.currentUser.isAdmin) {
+    return <Navigate to="/main" replace />;
+  }
+  
+  return <>{children}</>;
+}
+
 function AppRoutes() {
   const { data } = useApp();
   
@@ -37,7 +52,7 @@ function AppRoutes() {
         <ProtectedRoute><TMIPage /></ProtectedRoute>
       } />
       <Route path="/settings" element={
-        <ProtectedRoute><SettingsPage /></ProtectedRoute>
+        <AdminRoute><SettingsPage /></AdminRoute>
       } />
       <Route path="/" element={<Navigate to="/login" replace />} />
       <Route path="*" element={<NotFound />} />

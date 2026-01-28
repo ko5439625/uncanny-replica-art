@@ -29,7 +29,7 @@ export interface AnonymousPost {
   timestamp: string;
   likes: number;
   likedBy: number[];
-  authorId: number; // Hidden from UI
+  authorId: number;
 }
 
 export interface UserPost {
@@ -66,9 +66,22 @@ export interface AppData {
   announcement: Announcement;
 }
 
+// 관리자 계정 (이끄는 이)
+export const ADMIN_USER: User = {
+  id: 0,
+  name: "관리자",
+  nickname: "이끄는 이",
+  emoji: "👑",
+  isAdmin: true,
+};
+
+export const ADMIN_PASSWORD = "950520";
+export const MEMBER_PASSWORD = "0520";
+
 export const INITIAL_DATA: AppData = {
   users: [
-    { id: 1, name: "사용자1", nickname: "토끼", emoji: "🐰", isAdmin: true },
+    ADMIN_USER, // 관리자 계정 추가
+    { id: 1, name: "사용자1", nickname: "토끼", emoji: "🐰", isAdmin: false },
     { id: 2, name: "사용자2", nickname: "곰돌이", emoji: "🐻", isAdmin: false },
     { id: 3, name: "사용자3", nickname: "여우", emoji: "🦊", isAdmin: false },
     { id: 4, name: "사용자4", nickname: "냥이", emoji: "🐱", isAdmin: false },
@@ -91,7 +104,7 @@ export const INITIAL_DATA: AppData = {
       id: 1,
       optionA: "짜장면",
       optionB: "짬뽕",
-      votesA: [], // 빈 배열로 변경 - 아무도 투표 안함
+      votesA: [],
       votesB: [],
       createdAt: new Date().toISOString(),
     },
@@ -116,7 +129,22 @@ export const INITIAL_DATA: AppData = {
         authorId: 3,
       },
     ],
-    byUser: [],
+    byUser: [
+      {
+        id: 1,
+        userId: 1,
+        content: "오늘 카페에서 공부했는데 너무 집중 잘됐어!",
+        date: "2025-01-28",
+        reactions: { '👍': [], '🔥': [], '😂': [], '❤️': [] },
+      },
+      {
+        id: 2,
+        userId: 2,
+        content: "주말에 등산 갔다왔는데 날씨가 너무 좋았어 ☀️",
+        date: "2025-01-27",
+        reactions: { '👍': [1], '🔥': [], '😂': [], '❤️': [3] },
+      },
+    ],
   },
   announcement: {
     text: "이번 주 토요일 정모 있습니다! 🎉",

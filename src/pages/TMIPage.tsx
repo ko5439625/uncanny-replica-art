@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Plus, Heart, ChevronDown, ChevronRight } from 'lucide-react';
+import { Plus, Heart, ChevronDown, ChevronRight, Send } from 'lucide-react';
 import Header from '@/components/Header';
 import { useApp } from '@/contexts/AppContext';
 import { cn } from '@/lib/utils';
@@ -39,21 +39,30 @@ export default function TMIPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [newContent, setNewContent] = useState('');
   const [expandedUsers, setExpandedUsers] = useState<number[]>([]);
+  const [anonymousInput, setAnonymousInput] = useState('');
+  const chatEndRef = useRef<HTMLDivElement>(null);
 
-  const handleSubmit = () => {
+  // 익명 채팅 스크롤 하단으로
+  useEffect(() => {
+    if (activeTab === 'anonymous') {
+      chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, [data.tmiPosts.anonymous.length, activeTab]);
+
+  const handleSubmitAnonymous = () => {
+    if (!anonymousInput.trim()) return;
+    addAnonymousPost(anonymousInput.trim());
+    setAnonymousInput('');
+    toast.success('익명 메시지 전송! 🎭');
+  };
+
+  const handleSubmitNickname = () => {
     if (!newContent.trim()) {
       toast.error('내용을 입력해주세요!');
       return;
     }
-    
-    if (activeTab === 'anonymous') {
-      addAnonymousPost(newContent.trim());
-      toast.success('익명 TMI가 올라갔어요! 🎭');
-    } else {
-      addUserPost(newContent.trim());
-      toast.success('TMI가 올라갔어요! ✨');
-    }
-    
+    addUserPost(newContent.trim());
+    toast.success('TMI가 올라갔어요! ✨');
     setNewContent('');
     setIsModalOpen(false);
   };
@@ -66,43 +75,33 @@ export default function TMIPage() {
     );
   };
 
-  // Group posts by user - include all users with posts, plus current user
+  // 모든 사용자의 게시물 (관리자 제외, 게시물 있는 사람만)
   const postsByUser = data.users
+    .filter(u => !u.isAdmin) // 관리자 제외
     .map(user => ({
       user,
       posts: data.tmiPosts.byUser.filter(p => p.userId === user.id),
     }))
-    .filter(item => item.posts.length > 0 || item.user.id === data.currentUser?.id)
     .sort((a, b) => {
-      // Current user first
+      // 현재 유저 먼저
       if (a.user.id === data.currentUser?.id) return -1;
       if (b.user.id === data.currentUser?.id) return 1;
-      // Then by post count
+      // 게시물 많은 순
       return b.posts.length - a.posts.length;
     });
 
+  // 익명 게시물 시간순 정렬 (오래된 것이 위에)
+  const sortedAnonymousPosts = [...data.tmiPosts.anonymous].sort(
+    (a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
+  );
+
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background flex flex-col">
       <Header />
 
-      <main className="max-w-3xl mx-auto px-4 py-6">
-        {/* Page Title & Write Button */}
-        <div className="flex items-center justify-between mb-6">
-          <div>
-            <h2 className="text-2xl font-bold text-foreground">TMI</h2>
-            <p className="text-caption text-muted-foreground">일상을 공유해보세요</p>
-          </div>
-          <Button
-            onClick={() => setIsModalOpen(true)}
-            className="rounded-lg gap-2"
-          >
-            <Plus className="w-4 h-4" />
-            글쓰기
-          </Button>
-        </div>
-
+      <main className="flex-1 max-w-3xl mx-auto w-full px-4 py-4 flex flex-col">
         {/* Tabs */}
-        <div className="flex gap-2 mb-6">
+        <div className="flex gap-2 mb-4">
           {(['anonymous', 'nickname'] as Tab[]).map(tab => (
             <button
               key={tab}
@@ -114,7 +113,7 @@ export default function TMIPage() {
                   : 'bg-background text-muted-foreground border-border hover:border-foreground'
               )}
             >
-              {tab === 'anonymous' ? '익명' : '닉네임'}
+              {tab === 'anonymous' ? '익명 채팅' : '닉네임'}
             </button>
           ))}
         </div>
@@ -124,210 +123,223 @@ export default function TMIPage() {
           {activeTab === 'anonymous' ? (
             <motion.div
               key="anonymous"
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: 20 }}
-              className="grid gap-4 md:grid-cols-2"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="flex-1 flex flex-col min-h-0"
             >
-              {data.tmiPosts.anonymous.length === 0 ? (
-                <div className="md:col-span-2 text-center py-16 border border-dashed border-border rounded-2xl">
-                  <p className="text-4xl mb-4">📝</p>
-                  <p className="text-muted-foreground">아직 TMI가 없어요</p>
-                  <p className="text-caption text-muted-foreground mb-4">첫 번째 TMI를 올려보세요!</p>
-                  <Button onClick={() => setIsModalOpen(true)} variant="outline" className="rounded-lg">
-                    TMI 쓰기
-                  </Button>
-                </div>
-              ) : (
-                data.tmiPosts.anonymous.map(post => (
-                  <motion.div
-                    key={post.id}
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="bg-card border border-border rounded-xl p-5"
-                  >
-                    <div className="flex items-center gap-2 mb-3">
-                      <span className="w-10 h-10 bg-secondary rounded-full flex items-center justify-center text-xl">
-                        👤
-                      </span>
-                      <span className="text-body font-medium text-muted-foreground">익명</span>
-                    </div>
-                    <p className="text-body text-foreground mb-4 leading-relaxed">{post.content}</p>
-                    <div className="flex items-center justify-between pt-3 border-t border-border">
-                      <span className="text-small text-muted-foreground">
-                        {formatTimeAgo(post.timestamp)}
-                      </span>
-                      <button
-                        onClick={() => likeAnonymousPost(post.id)}
+              {/* Chat Messages - iPhone Style */}
+              <div className="flex-1 overflow-y-auto space-y-3 pb-4 min-h-[400px] max-h-[60vh]">
+                {sortedAnonymousPosts.length === 0 ? (
+                  <div className="flex items-center justify-center h-full">
+                    <p className="text-muted-foreground">첫 번째 익명 메시지를 보내보세요!</p>
+                  </div>
+                ) : (
+                  sortedAnonymousPosts.map(post => {
+                    const isMyPost = post.authorId === data.currentUser?.id;
+                    const hasLiked = data.currentUser 
+                      ? post.likedBy.includes(data.currentUser.id) 
+                      : false;
+
+                    return (
+                      <motion.div
+                        key={post.id}
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
                         className={cn(
-                          'flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-colors border',
-                          data.currentUser && post.likedBy.includes(data.currentUser.id)
-                            ? 'bg-foreground text-background border-foreground'
-                            : 'bg-background text-muted-foreground border-border hover:border-foreground'
+                          'flex',
+                          isMyPost ? 'justify-end' : 'justify-start'
                         )}
                       >
-                        <Heart className={cn(
-                          'w-4 h-4',
-                          data.currentUser && post.likedBy.includes(data.currentUser.id) && 'fill-current'
-                        )} />
-                        <span className="text-caption font-medium">{post.likes}</span>
-                      </button>
-                    </div>
-                  </motion.div>
-                ))
-              )}
+                        <div className={cn(
+                          'max-w-[80%] group',
+                          isMyPost ? 'items-end' : 'items-start'
+                        )}>
+                          <div className={cn(
+                            'px-4 py-2.5 rounded-2xl',
+                            isMyPost 
+                              ? 'bg-foreground text-background rounded-br-md' 
+                              : 'bg-secondary text-foreground rounded-bl-md'
+                          )}>
+                            <p className="text-body leading-relaxed">{post.content}</p>
+                          </div>
+                          <div className={cn(
+                            'flex items-center gap-2 mt-1 px-1',
+                            isMyPost ? 'flex-row-reverse' : 'flex-row'
+                          )}>
+                            <span className="text-[11px] text-muted-foreground">
+                              {formatTimeAgo(post.timestamp)}
+                            </span>
+                            <button
+                              onClick={() => likeAnonymousPost(post.id)}
+                              className={cn(
+                                'flex items-center gap-1 text-[11px] transition-colors',
+                                hasLiked ? 'text-foreground' : 'text-muted-foreground hover:text-foreground'
+                              )}
+                            >
+                              <Heart className={cn('w-3 h-3', hasLiked && 'fill-current')} />
+                              {post.likes > 0 && post.likes}
+                            </button>
+                          </div>
+                        </div>
+                      </motion.div>
+                    );
+                  })
+                )}
+                <div ref={chatEndRef} />
+              </div>
+
+              {/* Input Bar - iPhone Style */}
+              <div className="border-t border-border pt-3 mt-auto">
+                <div className="flex gap-2 items-end">
+                  <div className="flex-1 relative">
+                    <input
+                      type="text"
+                      value={anonymousInput}
+                      onChange={e => setAnonymousInput(e.target.value)}
+                      onKeyDown={e => e.key === 'Enter' && !e.shiftKey && handleSubmitAnonymous()}
+                      placeholder="익명 메시지 입력..."
+                      className="w-full px-4 py-3 bg-secondary rounded-full text-body placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-foreground/20"
+                    />
+                  </div>
+                  <button
+                    onClick={handleSubmitAnonymous}
+                    disabled={!anonymousInput.trim()}
+                    className={cn(
+                      'p-3 rounded-full transition-colors',
+                      anonymousInput.trim()
+                        ? 'bg-foreground text-background'
+                        : 'bg-secondary text-muted-foreground'
+                    )}
+                  >
+                    <Send className="w-5 h-5" />
+                  </button>
+                </div>
+              </div>
             </motion.div>
           ) : (
             <motion.div
               key="nickname"
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -20 }}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
               className="space-y-3"
             >
-              {postsByUser.length === 0 ? (
-                <div className="text-center py-16 border border-dashed border-border rounded-2xl">
-                  <p className="text-4xl mb-4">📝</p>
-                  <p className="text-muted-foreground">아직 TMI가 없어요</p>
-                  <p className="text-caption text-muted-foreground mb-4">첫 번째 TMI를 올려보세요!</p>
-                  <Button onClick={() => setIsModalOpen(true)} variant="outline" className="rounded-lg">
-                    TMI 쓰기
-                  </Button>
-                </div>
-              ) : (
-                postsByUser.map(({ user, posts }) => {
-                  const isExpanded = expandedUsers.includes(user.id);
-                  const isCurrentUser = data.currentUser?.id === user.id;
+              {/* Write Button */}
+              <Button
+                onClick={() => setIsModalOpen(true)}
+                className="w-full rounded-lg gap-2 mb-4"
+              >
+                <Plus className="w-4 h-4" />
+                TMI 쓰기
+              </Button>
 
-                  return (
-                    <div key={user.id} className="border border-border rounded-xl overflow-hidden">
-                      <button
-                        onClick={() => toggleUser(user.id)}
-                        className="w-full flex items-center justify-between p-4 hover:bg-secondary transition-colors"
-                      >
-                        <div className="flex items-center gap-3">
-                          {isExpanded ? (
-                            <ChevronDown className="w-5 h-5 text-muted-foreground" />
-                          ) : (
-                            <ChevronRight className="w-5 h-5 text-muted-foreground" />
-                          )}
-                          <span className="text-2xl">{user.emoji}</span>
-                          <span className="text-body font-medium">
-                            {user.nickname}
-                            {isCurrentUser && <span className="text-muted-foreground ml-1">(나)</span>}
-                          </span>
-                          <span className="px-2 py-0.5 bg-secondary rounded text-small text-muted-foreground">
-                            {posts.length}개
-                          </span>
-                        </div>
-                      </button>
+              {/* All Users List */}
+              {postsByUser.map(({ user, posts }) => {
+                const isExpanded = expandedUsers.includes(user.id);
+                const isCurrentUser = data.currentUser?.id === user.id;
 
-                      <AnimatePresence>
-                        {isExpanded && (
-                          <motion.div
-                            initial={{ height: 0, opacity: 0 }}
-                            animate={{ height: 'auto', opacity: 1 }}
-                            exit={{ height: 0, opacity: 0 }}
-                            className="border-t border-border"
-                          >
-                            {posts.length === 0 ? (
-                              <div className="p-6 text-center">
-                                <p className="text-caption text-muted-foreground mb-3">
-                                  아직 TMI가 없어요
-                                </p>
-                                {isCurrentUser && (
-                                  <Button
-                                    onClick={() => setIsModalOpen(true)}
-                                    variant="outline"
-                                    size="sm"
-                                    className="rounded-lg"
-                                  >
-                                    첫 TMI 쓰기
-                                  </Button>
-                                )}
-                              </div>
-                            ) : (
-                              <div className="divide-y divide-border">
-                                {posts.map(post => (
-                                  <div key={post.id} className="p-4">
-                                    <p className="text-small text-muted-foreground mb-2">
-                                      {post.date}
-                                    </p>
-                                    <p className="text-body text-foreground mb-3 leading-relaxed">
-                                      {post.content}
-                                    </p>
-                                    <div className="flex gap-2 flex-wrap">
-                                      {(['👍', '🔥', '😂', '❤️'] as const).map(emoji => {
-                                        const count = post.reactions[emoji].length;
-                                        const hasReacted = data.currentUser
-                                          ? post.reactions[emoji].includes(data.currentUser.id)
-                                          : false;
-
-                                        return (
-                                          <button
-                                            key={emoji}
-                                            onClick={() => reactToUserPost(post.id, emoji)}
-                                            className={cn(
-                                              'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-caption transition-colors border',
-                                              hasReacted
-                                                ? 'bg-foreground text-background border-foreground'
-                                                : 'bg-background text-muted-foreground border-border hover:border-foreground'
-                                            )}
-                                          >
-                                            <span>{emoji}</span>
-                                            {count > 0 && <span className="font-medium">{count}</span>}
-                                          </button>
-                                        );
-                                      })}
-                                    </div>
-                                  </div>
-                                ))}
-
-                                {isCurrentUser && (
-                                  <div className="p-4 bg-secondary/50">
-                                    <Button
-                                      onClick={() => setIsModalOpen(true)}
-                                      variant="outline"
-                                      className="w-full rounded-lg border-dashed"
-                                    >
-                                      + TMI 추가하기
-                                    </Button>
-                                  </div>
-                                )}
-                              </div>
-                            )}
-                          </motion.div>
+                return (
+                  <div key={user.id} className="border border-border rounded-xl overflow-hidden">
+                    <button
+                      onClick={() => toggleUser(user.id)}
+                      className="w-full flex items-center justify-between p-4 hover:bg-secondary transition-colors"
+                    >
+                      <div className="flex items-center gap-3">
+                        {isExpanded ? (
+                          <ChevronDown className="w-5 h-5 text-muted-foreground" />
+                        ) : (
+                          <ChevronRight className="w-5 h-5 text-muted-foreground" />
                         )}
-                      </AnimatePresence>
-                    </div>
-                  );
-                })
-              )}
+                        <span className="text-2xl">{user.emoji}</span>
+                        <span className="text-body font-medium">
+                          {user.nickname}
+                          {isCurrentUser && <span className="text-muted-foreground ml-1">(나)</span>}
+                        </span>
+                        <span className="px-2 py-0.5 bg-secondary rounded text-small text-muted-foreground">
+                          {posts.length}개
+                        </span>
+                      </div>
+                    </button>
+
+                    <AnimatePresence>
+                      {isExpanded && (
+                        <motion.div
+                          initial={{ height: 0, opacity: 0 }}
+                          animate={{ height: 'auto', opacity: 1 }}
+                          exit={{ height: 0, opacity: 0 }}
+                          className="border-t border-border"
+                        >
+                          {posts.length === 0 ? (
+                            <div className="p-6 text-center">
+                              <p className="text-caption text-muted-foreground">
+                                아직 TMI가 없어요
+                              </p>
+                            </div>
+                          ) : (
+                            <div className="divide-y divide-border">
+                              {posts.map(post => (
+                                <div key={post.id} className="p-4">
+                                  <p className="text-small text-muted-foreground mb-2">
+                                    {post.date}
+                                  </p>
+                                  <p className="text-body text-foreground mb-3 leading-relaxed">
+                                    {post.content}
+                                  </p>
+                                  <div className="flex gap-2 flex-wrap">
+                                    {(['👍', '🔥', '😂', '❤️'] as const).map(emoji => {
+                                      const count = post.reactions[emoji].length;
+                                      const hasReacted = data.currentUser
+                                        ? post.reactions[emoji].includes(data.currentUser.id)
+                                        : false;
+
+                                      return (
+                                        <button
+                                          key={emoji}
+                                          onClick={() => reactToUserPost(post.id, emoji)}
+                                          className={cn(
+                                            'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-caption transition-colors border',
+                                            hasReacted
+                                              ? 'bg-foreground text-background border-foreground'
+                                              : 'bg-background text-muted-foreground border-border hover:border-foreground'
+                                          )}
+                                        >
+                                          <span>{emoji}</span>
+                                          {count > 0 && <span className="font-medium">{count}</span>}
+                                        </button>
+                                      );
+                                    })}
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </div>
+                );
+              })}
             </motion.div>
           )}
         </AnimatePresence>
       </main>
 
-      {/* Write Modal */}
+      {/* Write Modal for Nickname Tab */}
       <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-        <DialogContent className="rounded-xl max-w-md mx-4">
+        <DialogContent className="rounded-xl max-w-md mx-4 bg-background border-border">
           <DialogHeader>
-            <DialogTitle className="text-xl font-bold">
-              {activeTab === 'anonymous' ? '익명 TMI 쓰기' : 'TMI 쓰기'}
-            </DialogTitle>
+            <DialogTitle className="text-xl font-bold">TMI 쓰기</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
             <div className="text-caption text-muted-foreground">
-              {activeTab === 'anonymous' 
-                ? '익명으로 올라가요. 누군지 아무도 몰라요! 🎭'
-                : `${data.currentUser?.emoji} ${data.currentUser?.nickname}님으로 올라가요`
-              }
+              {data.currentUser?.emoji} {data.currentUser?.nickname}님으로 올라가요
             </div>
             <Textarea
               value={newContent}
               onChange={e => setNewContent(e.target.value)}
               placeholder="오늘 있었던 일, 생각, 느낌... 뭐든지 좋아요!"
-              className="min-h-[140px] rounded-lg resize-none text-body"
+              className="min-h-[140px] rounded-lg resize-none text-body bg-background border-border"
             />
             <div className="flex gap-2">
               <Button
@@ -341,7 +353,7 @@ export default function TMIPage() {
                 취소
               </Button>
               <Button
-                onClick={handleSubmit}
+                onClick={handleSubmitNickname}
                 disabled={!newContent.trim()}
                 className="flex-1 rounded-lg"
               >
@@ -353,11 +365,9 @@ export default function TMIPage() {
       </Dialog>
 
       {/* Footer */}
-      <footer className="border-t border-border mt-12 py-6">
+      <footer className="border-t border-border py-4 mt-auto">
         <div className="max-w-3xl mx-auto px-4 text-center">
-          <p className="text-small text-muted-foreground">
-            💬 Small Talk
-          </p>
+          <p className="text-small text-muted-foreground">💬 Small Talk</p>
         </div>
       </footer>
     </div>
