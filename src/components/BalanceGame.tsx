@@ -54,10 +54,10 @@ export default function BalanceGame() {
   };
 
   return (
-    <div className="border border-border rounded-xl p-5">
-      <div className="flex items-center gap-2 mb-4">
-        <span className="text-xl">⚔️</span>
-        <h3 className="text-lg font-bold text-foreground">밸런스 게임</h3>
+    <div className="border border-border rounded-xl p-6">
+      <div className="flex items-center gap-2 mb-5">
+        <span className="text-2xl">⚔️</span>
+        <h3 className="text-xl font-bold text-foreground">밸런스 게임</h3>
         {totalVotes > 0 && (
           <span className="text-caption text-muted-foreground ml-auto">
             {totalVotes}명 참여
@@ -65,22 +65,22 @@ export default function BalanceGame() {
         )}
       </div>
 
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-2 gap-4">
         {/* Option A */}
         <motion.button
           whileTap={{ scale: 0.98 }}
           onClick={() => handleVote('A')}
           className={cn(
-            'p-4 rounded-lg border-2 transition-all relative overflow-hidden text-left cursor-pointer',
+            'p-5 rounded-xl border-2 transition-all relative overflow-hidden text-left cursor-pointer min-h-[120px]',
             userVote === 'A'
               ? 'border-foreground bg-foreground text-background'
               : 'border-border hover:border-foreground'
           )}
         >
-          <p className="text-body font-semibold mb-1">{game.optionA}</p>
+          <p className="text-body font-semibold mb-2 leading-snug">{game.optionA}</p>
           {hasVoted && (
             <p className={cn(
-              'text-2xl font-bold',
+              'text-3xl font-bold',
               userVote === 'A' ? 'text-background' : 'text-foreground'
             )}>
               {percentA}%
@@ -90,7 +90,7 @@ export default function BalanceGame() {
             <p className="text-caption text-muted-foreground">클릭하여 투표</p>
           )}
           {userVote === 'A' && (
-            <span className="absolute top-2 right-2 text-sm">✓</span>
+            <span className="absolute top-3 right-3 text-lg">✓</span>
           )}
         </motion.button>
 
@@ -99,16 +99,16 @@ export default function BalanceGame() {
           whileTap={{ scale: 0.98 }}
           onClick={() => handleVote('B')}
           className={cn(
-            'p-4 rounded-lg border-2 transition-all relative overflow-hidden text-left cursor-pointer',
+            'p-5 rounded-xl border-2 transition-all relative overflow-hidden text-left cursor-pointer min-h-[120px]',
             userVote === 'B'
               ? 'border-foreground bg-foreground text-background'
               : 'border-border hover:border-foreground'
           )}
         >
-          <p className="text-body font-semibold mb-1">{game.optionB}</p>
+          <p className="text-body font-semibold mb-2 leading-snug">{game.optionB}</p>
           {hasVoted && (
             <p className={cn(
-              'text-2xl font-bold',
+              'text-3xl font-bold',
               userVote === 'B' ? 'text-background' : 'text-foreground'
             )}>
               {percentB}%
@@ -118,7 +118,7 @@ export default function BalanceGame() {
             <p className="text-caption text-muted-foreground">클릭하여 투표</p>
           )}
           {userVote === 'B' && (
-            <span className="absolute top-2 right-2 text-sm">✓</span>
+            <span className="absolute top-3 right-3 text-lg">✓</span>
           )}
         </motion.button>
       </div>

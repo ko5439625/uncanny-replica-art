@@ -33,17 +33,20 @@ export default function MainPage() {
           <AnnouncementBanner />
         </motion.div>
 
-        {/* Two Column Layout on Desktop */}
-        <div className="grid md:grid-cols-2 gap-4 mt-4">
-          <motion.div variants={itemVariants} className="space-y-4">
-            <Calendar />
-          </motion.div>
+        {/* 캘린더 - 크게 */}
+        <motion.div variants={itemVariants} className="mt-4">
+          <Calendar />
+        </motion.div>
 
-          <motion.div variants={itemVariants} className="space-y-4">
-            <BalanceGame />
-            <RulesList />
-          </motion.div>
-        </div>
+        {/* 밸런스 게임 */}
+        <motion.div variants={itemVariants} className="mt-4">
+          <BalanceGame />
+        </motion.div>
+
+        {/* 우리의 룰 - 하이라이트 */}
+        <motion.div variants={itemVariants} className="mt-4">
+          <RulesList />
+        </motion.div>
       </motion.main>
 
       {/* Footer */}

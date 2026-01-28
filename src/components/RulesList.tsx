@@ -7,24 +7,24 @@ export default function RulesList() {
   if (visibleRules.length === 0) return null;
 
   return (
-    <div className="border border-border rounded-xl p-5">
-      <div className="flex items-center gap-2 mb-3">
-        <span className="text-xl">📜</span>
-        <h3 className="text-lg font-bold text-foreground">우리의 룰</h3>
+    <div className="border-2 border-foreground rounded-xl p-5 bg-foreground/5">
+      <div className="flex items-center gap-2 mb-4">
+        <span className="text-2xl">📜</span>
+        <h3 className="text-xl font-bold text-foreground">우리의 룰</h3>
       </div>
 
-      <ul className="space-y-2">
+      <ul className="space-y-3">
         {visibleRules
           .sort((a, b) => a.order - b.order)
           .map((rule, idx) => (
             <li
               key={rule.id}
-              className="flex items-start gap-3 text-body text-foreground"
+              className="flex items-start gap-3 text-body text-foreground bg-background rounded-lg p-3 border border-border"
             >
-              <span className="w-6 h-6 bg-secondary rounded flex items-center justify-center text-small font-medium text-muted-foreground shrink-0">
+              <span className="w-7 h-7 bg-foreground text-background rounded-full flex items-center justify-center text-small font-bold shrink-0">
                 {idx + 1}
               </span>
-              <span>{rule.text}</span>
+              <span className="font-medium pt-0.5">{rule.text}</span>
             </li>
           ))}
       </ul>
