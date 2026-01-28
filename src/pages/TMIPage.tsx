@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Plus, Heart, ChevronDown, ChevronRight } from 'lucide-react';
 import Header from '@/components/Header';
-import BottomNav from '@/components/BottomNav';
 import { useApp } from '@/contexts/AppContext';
 import { cn } from '@/lib/utils';
 import {
@@ -68,36 +67,44 @@ export default function TMIPage() {
   })).filter(item => item.posts.length > 0 || item.user.id === data.currentUser?.id);
 
   return (
-    <div className="min-h-screen bg-background pb-20">
+    <div className="min-h-screen bg-background">
       <Header />
 
-      {/* Tabs */}
-      <div className="sticky top-14 z-30 bg-background border-b border-border">
-        <div className="max-w-lg mx-auto flex">
+      <main className="max-w-3xl mx-auto px-4 py-6">
+        {/* Page Title & Write Button */}
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <h2 className="text-h2 text-foreground">TMI 게시판 💬</h2>
+            <p className="text-caption text-muted-foreground">일상을 공유해보세요</p>
+          </div>
+          <Button
+            onClick={() => setIsModalOpen(true)}
+            className="rounded-xl gap-2"
+          >
+            <Plus className="w-4 h-4" />
+            TMI 쓰기
+          </Button>
+        </div>
+
+        {/* Tabs */}
+        <div className="flex gap-2 mb-6">
           {(['anonymous', 'nickname'] as Tab[]).map(tab => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
               className={cn(
-                'flex-1 py-3 text-body font-medium relative transition-colors',
-                activeTab === tab ? 'text-foreground' : 'text-muted-foreground'
+                'px-4 py-2 rounded-full text-body font-medium transition-all',
+                activeTab === tab
+                  ? 'bg-primary text-primary-foreground'
+                  : 'bg-muted text-muted-foreground hover:bg-muted/80'
               )}
             >
-              {tab === 'anonymous' ? '익명' : '닉네임'}
-              {activeTab === tab && (
-                <motion.div
-                  layoutId="tab-indicator"
-                  className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary"
-                  transition={{ type: 'spring', stiffness: 400, damping: 30 }}
-                />
-              )}
+              {tab === 'anonymous' ? '👤 익명' : '😊 닉네임'}
             </button>
           ))}
         </div>
-      </div>
 
-      {/* Content */}
-      <main className="max-w-lg mx-auto px-4 py-4">
+        {/* Content */}
         <AnimatePresence mode="wait">
           {activeTab === 'anonymous' ? (
             <motion.div
@@ -105,35 +112,37 @@ export default function TMIPage() {
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: 20 }}
-              className="space-y-3"
+              className="grid gap-4 md:grid-cols-2"
             >
               {data.tmiPosts.anonymous.length === 0 ? (
-                <p className="text-center text-muted-foreground py-12">
-                  아직 TMI가 없어요 😢<br />첫 번째 TMI를 올려보세요!
-                </p>
+                <div className="md:col-span-2 text-center py-16 bg-card rounded-2xl shadow-soft">
+                  <p className="text-4xl mb-4">😢</p>
+                  <p className="text-muted-foreground">아직 TMI가 없어요</p>
+                  <p className="text-caption text-muted-foreground">첫 번째 TMI를 올려보세요!</p>
+                </div>
               ) : (
                 data.tmiPosts.anonymous.map(post => (
                   <motion.div
                     key={post.id}
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="bg-card rounded-2xl p-4 shadow-soft"
+                    className="bg-card rounded-2xl p-5 shadow-soft"
                   >
-                    <div className="flex items-center gap-2 mb-2">
-                      <span className="w-8 h-8 bg-muted rounded-full flex items-center justify-center text-lg">
+                    <div className="flex items-center gap-2 mb-3">
+                      <span className="w-10 h-10 bg-muted rounded-full flex items-center justify-center text-xl">
                         👤
                       </span>
-                      <span className="text-caption text-muted-foreground">익명</span>
+                      <span className="text-body font-medium text-muted-foreground">익명</span>
                     </div>
-                    <p className="text-body text-foreground mb-3">{post.content}</p>
-                    <div className="flex items-center justify-between">
+                    <p className="text-body text-foreground mb-4 leading-relaxed">{post.content}</p>
+                    <div className="flex items-center justify-between pt-3 border-t border-border">
                       <span className="text-small text-muted-foreground">
                         {formatTimeAgo(post.timestamp)}
                       </span>
                       <button
                         onClick={() => likeAnonymousPost(post.id)}
                         className={cn(
-                          'flex items-center gap-1 px-3 py-1 rounded-full transition-colors',
+                          'flex items-center gap-1.5 px-3 py-1.5 rounded-full transition-colors',
                           data.currentUser && post.likedBy.includes(data.currentUser.id)
                             ? 'bg-primary/10 text-primary'
                             : 'bg-muted text-muted-foreground hover:text-primary'
@@ -143,7 +152,7 @@ export default function TMIPage() {
                           'w-4 h-4',
                           data.currentUser && post.likedBy.includes(data.currentUser.id) && 'fill-current'
                         )} />
-                        <span className="text-small">{post.likes}</span>
+                        <span className="text-caption font-medium">{post.likes}</span>
                       </button>
                     </div>
                   </motion.div>
@@ -156,12 +165,13 @@ export default function TMIPage() {
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: -20 }}
-              className="space-y-2"
+              className="space-y-3"
             >
               {postsByUser.length === 0 ? (
-                <p className="text-center text-muted-foreground py-12">
-                  아직 TMI가 없어요 😢
-                </p>
+                <div className="text-center py-16 bg-card rounded-2xl shadow-soft">
+                  <p className="text-4xl mb-4">😢</p>
+                  <p className="text-muted-foreground">아직 TMI가 없어요</p>
+                </div>
               ) : (
                 postsByUser.map(({ user, posts }) => {
                   const isExpanded = expandedUsers.includes(user.id);
@@ -173,15 +183,17 @@ export default function TMIPage() {
                         onClick={() => toggleUser(user.id)}
                         className="w-full flex items-center justify-between p-4 hover:bg-muted/50 transition-colors"
                       >
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-3">
                           {isExpanded ? (
-                            <ChevronDown className="w-4 h-4 text-muted-foreground" />
+                            <ChevronDown className="w-5 h-5 text-muted-foreground" />
                           ) : (
-                            <ChevronRight className="w-4 h-4 text-muted-foreground" />
+                            <ChevronRight className="w-5 h-5 text-muted-foreground" />
                           )}
-                          <span className="text-xl">{user.emoji}</span>
+                          <span className="text-2xl">{user.emoji}</span>
                           <span className="text-body font-medium">{user.nickname}님</span>
-                          <span className="text-caption text-muted-foreground">({posts.length})</span>
+                          <span className="px-2 py-0.5 bg-muted rounded-full text-small text-muted-foreground">
+                            {posts.length}개
+                          </span>
                         </div>
                       </button>
 
@@ -201,13 +213,13 @@ export default function TMIPage() {
                               <div className="divide-y divide-border">
                                 {posts.map(post => (
                                   <div key={post.id} className="p-4">
-                                    <p className="text-small text-muted-foreground mb-1">
-                                      {post.date}
+                                    <p className="text-small text-muted-foreground mb-2">
+                                      📅 {post.date}
                                     </p>
-                                    <p className="text-body text-foreground mb-2">
+                                    <p className="text-body text-foreground mb-3 leading-relaxed">
                                       {post.content}
                                     </p>
-                                    <div className="flex gap-2">
+                                    <div className="flex gap-2 flex-wrap">
                                       {(['👍', '🔥', '😂', '❤️'] as const).map(emoji => {
                                         const count = post.reactions[emoji].length;
                                         const hasReacted = data.currentUser
@@ -219,14 +231,14 @@ export default function TMIPage() {
                                             key={emoji}
                                             onClick={() => reactToUserPost(post.id, emoji)}
                                             className={cn(
-                                              'flex items-center gap-1 px-2 py-1 rounded-full text-small transition-colors',
+                                              'flex items-center gap-1.5 px-3 py-1.5 rounded-full text-caption transition-colors',
                                               hasReacted
                                                 ? 'bg-primary/10 text-primary'
                                                 : 'bg-muted text-muted-foreground hover:bg-primary/5'
                                             )}
                                           >
                                             <span>{emoji}</span>
-                                            {count > 0 && <span>{count}</span>}
+                                            {count > 0 && <span className="font-medium">{count}</span>}
                                           </button>
                                         );
                                       })}
@@ -237,13 +249,13 @@ export default function TMIPage() {
                             )}
 
                             {isCurrentUser && (
-                              <div className="p-4 border-t border-border">
+                              <div className="p-4 border-t border-border bg-muted/30">
                                 <Button
                                   onClick={() => setIsModalOpen(true)}
                                   variant="outline"
                                   className="w-full rounded-xl border-dashed"
                                 >
-                                  + TMI 추가
+                                  + 나의 TMI 추가하기
                                 </Button>
                               </div>
                             )}
@@ -259,23 +271,11 @@ export default function TMIPage() {
         </AnimatePresence>
       </main>
 
-      {/* Floating Action Button */}
-      {activeTab === 'anonymous' && (
-        <motion.button
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-          onClick={() => setIsModalOpen(true)}
-          className="fixed bottom-24 right-4 w-14 h-14 bg-primary text-primary-foreground rounded-full shadow-float flex items-center justify-center"
-        >
-          <Plus className="w-6 h-6" />
-        </motion.button>
-      )}
-
       {/* Write Modal */}
       <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-        <DialogContent className="rounded-2xl max-w-sm mx-4">
+        <DialogContent className="rounded-2xl max-w-md mx-4">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
+            <DialogTitle className="flex items-center gap-2 text-h3">
               <span>오늘의 TMI</span>
               <span>💭</span>
             </DialogTitle>
@@ -284,21 +284,37 @@ export default function TMIPage() {
             <Textarea
               value={newContent}
               onChange={e => setNewContent(e.target.value)}
-              placeholder="여기에 TMI를 적어주세요..."
-              className="min-h-[120px] rounded-xl resize-none"
+              placeholder="오늘 있었던 일, 생각, 느낌... 뭐든지 좋아요!"
+              className="min-h-[140px] rounded-xl resize-none text-body"
             />
-            <Button
-              onClick={handleSubmit}
-              disabled={!newContent.trim()}
-              className="w-full rounded-xl"
-            >
-              {activeTab === 'anonymous' ? '익명으로 올리기' : 'TMI 올리기'}
-            </Button>
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                onClick={() => setIsModalOpen(false)}
+                className="flex-1 rounded-xl"
+              >
+                취소
+              </Button>
+              <Button
+                onClick={handleSubmit}
+                disabled={!newContent.trim()}
+                className="flex-1 rounded-xl"
+              >
+                {activeTab === 'anonymous' ? '익명으로 올리기' : 'TMI 올리기'}
+              </Button>
+            </div>
           </div>
         </DialogContent>
       </Dialog>
 
-      <BottomNav />
+      {/* Footer */}
+      <footer className="border-t border-border mt-12 py-6">
+        <div className="max-w-3xl mx-auto px-4 text-center">
+          <p className="text-small text-muted-foreground">
+            🗨️ 스몰토크 • 우리 모임 전용 웹사이트
+          </p>
+        </div>
+      </footer>
     </div>
   );
 }
