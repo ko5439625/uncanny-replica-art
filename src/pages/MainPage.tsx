@@ -50,7 +50,7 @@ export default function MainPage() {
       <footer className="border-t border-border mt-12 py-6">
         <div className="max-w-3xl mx-auto px-4 text-center">
           <p className="text-small text-muted-foreground">
-            🗨️ 스몰토크 • 우리 모임 전용 웹사이트
+            💬 Small Talk
           </p>
         </div>
       </footer>

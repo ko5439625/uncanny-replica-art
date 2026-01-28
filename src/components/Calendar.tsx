@@ -35,12 +35,13 @@ export default function Calendar() {
     return `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
   };
 
-  const getAvailabilityColor = (day: number) => {
+  const getAvailabilityLevel = (day: number) => {
     const dateKey = getDateKey(day);
     const count = data.availability[dateKey]?.length || 0;
-    if (count >= 5) return 'bg-success';
-    if (count >= 3) return 'bg-warning';
-    return 'bg-muted';
+    if (count >= 5) return 'high';
+    if (count >= 3) return 'medium';
+    if (count >= 1) return 'low';
+    return 'none';
   };
 
   const handlePrev = () => {
@@ -74,28 +75,28 @@ export default function Calendar() {
     : false;
 
   return (
-    <div className="bg-card rounded-2xl p-4 shadow-soft">
+    <div className="border border-border rounded-xl p-5">
       {/* Month Navigation */}
       <div className="flex items-center justify-between mb-4">
         <button
           onClick={handlePrev}
           disabled={!canGoPrev}
           className={cn(
-            'p-2 rounded-full transition-colors',
-            canGoPrev ? 'hover:bg-muted text-foreground' : 'text-muted-foreground/30'
+            'p-2 rounded-lg transition-colors border',
+            canGoPrev ? 'hover:bg-secondary border-border' : 'text-muted-foreground/30 border-transparent'
           )}
         >
           <ChevronLeft className="w-5 h-5" />
         </button>
-        <h3 className="text-h3 text-foreground">
+        <h3 className="text-lg font-bold text-foreground">
           {year}년 {month + 1}월
         </h3>
         <button
           onClick={handleNext}
           disabled={!canGoNext}
           className={cn(
-            'p-2 rounded-full transition-colors',
-            canGoNext ? 'hover:bg-muted text-foreground' : 'text-muted-foreground/30'
+            'p-2 rounded-lg transition-colors border',
+            canGoNext ? 'hover:bg-secondary border-border' : 'text-muted-foreground/30 border-transparent'
           )}
         >
           <ChevronRight className="w-5 h-5" />
@@ -109,7 +110,7 @@ export default function Calendar() {
             key={day}
             className={cn(
               'text-center text-small font-medium py-2',
-              idx === 0 ? 'text-destructive' : idx === 6 ? 'text-secondary' : 'text-muted-foreground'
+              idx === 0 ? 'text-destructive' : idx === 6 ? 'text-muted-foreground' : 'text-muted-foreground'
             )}
           >
             {day}
@@ -126,6 +127,7 @@ export default function Calendar() {
 
           const dateKey = getDateKey(day);
           const isSelected = selectedDate === dateKey;
+          const level = getAvailabilityLevel(day);
           const availableUsers = data.availability[dateKey] || [];
 
           return (
@@ -134,20 +136,19 @@ export default function Calendar() {
               whileTap={{ scale: 0.95 }}
               onClick={() => handleDateClick(day)}
               className={cn(
-                'aspect-square rounded-xl flex flex-col items-center justify-center gap-0.5 relative transition-all',
+                'aspect-square rounded-lg flex flex-col items-center justify-center gap-0.5 relative transition-all border',
                 isSelected
-                  ? 'bg-primary text-primary-foreground ring-2 ring-primary ring-offset-2'
-                  : 'hover:bg-muted'
+                  ? 'bg-foreground text-background border-foreground'
+                  : level === 'high'
+                    ? 'bg-foreground/10 border-foreground/20'
+                    : level === 'medium'
+                      ? 'bg-secondary border-border'
+                      : 'border-transparent hover:border-border'
               )}
             >
               <span className="text-caption font-medium">{day}</span>
-              {availableUsers.length > 0 && (
-                <div
-                  className={cn(
-                    'w-2 h-2 rounded-full',
-                    isSelected ? 'bg-primary-foreground' : getAvailabilityColor(day)
-                  )}
-                />
+              {availableUsers.length > 0 && !isSelected && (
+                <span className="text-[10px] text-muted-foreground">{availableUsers.length}</span>
               )}
             </motion.button>
           );
@@ -165,10 +166,10 @@ export default function Calendar() {
           >
             <div className="flex items-center justify-between mb-3">
               <span className="text-body font-medium">
-                선택한 날짜: {parseInt(selectedDate.split('-')[1])}월 {parseInt(selectedDate.split('-')[2])}일
+                {parseInt(selectedDate.split('-')[1])}월 {parseInt(selectedDate.split('-')[2])}일
               </span>
               <span className="text-caption text-muted-foreground">
-                {selectedAvailability.length}명 참여 가능
+                {selectedAvailability.length}명 가능
               </span>
             </div>
 
@@ -179,7 +180,7 @@ export default function Calendar() {
                   return user ? (
                     <span
                       key={userId}
-                      className="inline-flex items-center gap-1 px-2 py-1 bg-muted rounded-full text-small"
+                      className="inline-flex items-center gap-1 px-2 py-1 bg-secondary rounded text-small"
                     >
                       {user.emoji} {user.nickname}
                     </span>
@@ -191,14 +192,9 @@ export default function Calendar() {
             <Button
               onClick={handleToggle}
               variant={isUserAvailable ? 'outline' : 'default'}
-              className={cn(
-                'w-full rounded-xl',
-                isUserAvailable
-                  ? 'border-primary text-primary hover:bg-primary/10'
-                  : 'bg-primary text-primary-foreground'
-              )}
+              className="w-full rounded-lg"
             >
-              {isUserAvailable ? '참여 취소하기 😢' : '나도 참여 가능! 🙋'}
+              {isUserAvailable ? '참여 취소' : '참여 가능'}
             </Button>
           </motion.div>
         )}

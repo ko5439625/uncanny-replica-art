@@ -91,8 +91,8 @@ export const INITIAL_DATA: AppData = {
       id: 1,
       optionA: "짜장면",
       optionB: "짬뽕",
-      votesA: [1, 3, 5],
-      votesB: [2, 4],
+      votesA: [], // 빈 배열로 변경 - 아무도 투표 안함
+      votesB: [],
       createdAt: new Date().toISOString(),
     },
     history: [],
@@ -104,7 +104,7 @@ export const INITIAL_DATA: AppData = {
         content: "오늘 점심 너무 맛있었다 ㅠㅠ 떡볶이 최고...",
         timestamp: new Date(Date.now() - 3 * 60 * 60 * 1000).toISOString(),
         likes: 5,
-        likedBy: [1, 2, 3, 4, 5],
+        likedBy: [],
         authorId: 1,
       },
       {
@@ -112,19 +112,11 @@ export const INITIAL_DATA: AppData = {
         content: "요즘 넷플릭스 뭐 볼게 없음... 추천 좀 해주세요 🙏",
         timestamp: new Date(Date.now() - 5 * 60 * 60 * 1000).toISOString(),
         likes: 2,
-        likedBy: [2, 4],
+        likedBy: [],
         authorId: 3,
       },
     ],
-    byUser: [
-      {
-        id: 1,
-        userId: 1,
-        content: "발렌타인 초콜릿 받음 ㅎㅎ",
-        date: "2025-02-14",
-        reactions: { '👍': [2], '🔥': [3], '😂': [], '❤️': [4, 5, 6] },
-      },
-    ],
+    byUser: [],
   },
   announcement: {
     text: "이번 주 토요일 정모 있습니다! 🎉",

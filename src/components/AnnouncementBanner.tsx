@@ -16,16 +16,16 @@ export default function AnnouncementBanner() {
       initial={{ opacity: 0, y: -10 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -10 }}
-      className="bg-accent text-accent-foreground rounded-2xl p-4 shadow-soft relative"
+      className="bg-foreground text-background rounded-xl p-4 relative"
     >
       <button
         onClick={handleDismiss}
-        className="absolute top-2 right-2 p-1 hover:bg-accent-foreground/10 rounded-full transition-colors"
+        className="absolute top-3 right-3 p-1 hover:bg-background/10 rounded transition-colors"
         aria-label="닫기"
       >
         <X className="w-4 h-4" />
       </button>
-      <div className="flex items-start gap-2 pr-6">
+      <div className="flex items-start gap-3 pr-8">
         <span className="text-xl shrink-0">📢</span>
         <p className="text-body">{data.announcement.text}</p>
       </div>
