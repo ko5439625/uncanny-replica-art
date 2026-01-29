@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Plus, Heart, ChevronDown, Send, Clock, X, User } from 'lucide-react';
+import { Plus, Heart, ChevronDown, Send, Clock, Trash2 } from 'lucide-react';
 import Header from '@/components/Header';
 import { useApp } from '@/contexts/AppContext';
 import { cn } from '@/lib/utils';
@@ -46,7 +46,7 @@ function isWithinThreeDays(timestamp: string): boolean {
 }
 
 export default function TMIPage() {
-  const { data, loading, addAnonymousPost, likeAnonymousPost, addUserPost, reactToUserPost } = useApp();
+  const { data, loading, addAnonymousPost, likeAnonymousPost, addUserPost, deleteUserPost, reactToUserPost } = useApp();
   const [activeTab, setActiveTab] = useState<Tab>('anonymous');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [newContent, setNewContent] = useState('');
@@ -315,6 +315,19 @@ export default function TMIPage() {
                           <span className="text-lg">{post.user?.emoji}</span>
                           <span className="text-body font-semibold">{post.user?.nickname || '알 수 없음'}</span>
                           <span className="text-small text-muted-foreground ml-auto">{post.date}</span>
+                          {post.userId === data.currentUser?.id && (
+                            <button
+                              onClick={() => {
+                                if (window.confirm('이 TMI를 삭제할까요?')) {
+                                  deleteUserPost(post.id);
+                                  toast.success('삭제되었어요');
+                                }
+                              }}
+                              className="p-1.5 rounded-lg text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          )}
                         </div>
 
                         {/* 내용 */}
@@ -424,7 +437,22 @@ export default function TMIPage() {
             ) : (
               personalPosts.map(post => (
                 <div key={post.id} className="border border-border rounded-lg p-3">
-                  <p className="text-small text-muted-foreground mb-1.5">{post.date}</p>
+                  <div className="flex items-center justify-between mb-1.5">
+                    <p className="text-small text-muted-foreground">{post.date}</p>
+                    {post.userId === data.currentUser?.id && (
+                      <button
+                        onClick={() => {
+                          if (window.confirm('이 TMI를 삭제할까요?')) {
+                            deleteUserPost(post.id);
+                            toast.success('삭제되었어요');
+                          }
+                        }}
+                        className="p-1 rounded-lg text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    )}
+                  </div>
                   <p className="text-body text-foreground leading-relaxed mb-2">{post.content}</p>
                   <div className="flex gap-2 flex-wrap">
                     {(['👍', '🔥', '😂', '❤️'] as const).map(emoji => {

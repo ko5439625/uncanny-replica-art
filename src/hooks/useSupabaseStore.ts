@@ -349,6 +349,13 @@ export function useSupabaseStore() {
     loadData();
   }, [data.currentUser, loadData]);
 
+  const deleteUserPost = useCallback(async (postId: number) => {
+    if (!data.currentUser) return;
+    await supabase.from('user_post_reactions').delete().eq('post_id', postId);
+    await supabase.from('user_posts').delete().eq('id', postId).eq('user_id', data.currentUser.id);
+    loadData();
+  }, [data.currentUser, loadData]);
+
   const reactToUserPost = useCallback(async (postId: number, emoji: '👍' | '🔥' | '😂' | '❤️') => {
     if (!data.currentUser) return;
     const userId = data.currentUser.id;
@@ -436,6 +443,7 @@ export function useSupabaseStore() {
     addAnonymousPost,
     likeAnonymousPost,
     addUserPost,
+    deleteUserPost,
     reactToUserPost,
     updateAnnouncement,
     updateUser,
