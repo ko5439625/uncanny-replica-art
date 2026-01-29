@@ -298,6 +298,7 @@ export type Database = {
           is_admin: boolean
           name: string
           nickname: string
+          password: string
         }
         Insert: {
           created_at?: string
@@ -306,6 +307,7 @@ export type Database = {
           is_admin?: boolean
           name: string
           nickname: string
+          password?: string
         }
         Update: {
           created_at?: string
@@ -314,6 +316,7 @@ export type Database = {
           is_admin?: boolean
           name?: string
           nickname?: string
+          password?: string
         }
         Relationships: []
       }

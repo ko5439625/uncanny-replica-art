@@ -10,6 +10,7 @@ interface DbUser {
   nickname: string;
   emoji: string;
   is_admin: boolean;
+  password: string;
 }
 
 interface DbRule {
@@ -403,6 +404,22 @@ export function useSupabaseStore() {
     loadData();
   }, [loadData]);
 
+  // 비밀번호 검증
+  const verifyPassword = useCallback(async (userId: number, password: string): Promise<boolean> => {
+    const { data: user } = await supabase
+      .from('users')
+      .select('password')
+      .eq('id', userId)
+      .maybeSingle();
+    
+    return user?.password === password;
+  }, []);
+
+  // 비밀번호 변경
+  const changePassword = useCallback(async (userId: number, newPassword: string) => {
+    await supabase.from('users').update({ password: newPassword }).eq('id', userId);
+  }, []);
+
   return {
     data,
     loading,
@@ -424,5 +441,7 @@ export function useSupabaseStore() {
     updateUser,
     addUser,
     deleteUser,
+    verifyPassword,
+    changePassword,
   };
 }

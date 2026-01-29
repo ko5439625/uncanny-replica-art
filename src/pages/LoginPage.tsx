@@ -12,7 +12,6 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { toast } from 'sonner';
-import { ADMIN_PASSWORD, MEMBER_PASSWORD } from '@/types';
 
 const WELCOME_MESSAGES = [
   "오늘도 왔구나, {nickname}! 🎉",
@@ -24,10 +23,11 @@ const WELCOME_MESSAGES = [
 
 export default function LoginPage() {
   const navigate = useNavigate();
-  const { data, login, loading } = useApp();
+  const { data, login, loading, verifyPassword } = useApp();
   const [selectedUserId, setSelectedUserId] = useState<string>('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [isLoggingIn, setIsLoggingIn] = useState(false);
 
   if (loading) {
     return (
@@ -38,7 +38,7 @@ export default function LoginPage() {
     );
   }
 
-  const handleLogin = () => {
+  const handleLogin = async () => {
     if (!selectedUserId) {
       setError('닉네임을 선택해주세요');
       return;
@@ -50,11 +50,14 @@ export default function LoginPage() {
       return;
     }
 
-    // 관리자 계정은 다른 비밀번호
-    const requiredPassword = user.isAdmin ? ADMIN_PASSWORD : MEMBER_PASSWORD;
+    setIsLoggingIn(true);
     
-    if (password !== requiredPassword) {
+    // DB에서 비밀번호 검증
+    const isValid = await verifyPassword(user.id, password);
+    
+    if (!isValid) {
       setError('비밀번호가 틀렸어요 😢');
+      setIsLoggingIn(false);
       return;
     }
 
@@ -119,7 +122,7 @@ export default function LoginPage() {
                 setPassword(e.target.value);
                 setError('');
               }}
-              onKeyDown={e => e.key === 'Enter' && handleLogin()}
+              onKeyDown={e => e.key === 'Enter' && !isLoggingIn && handleLogin()}
               className="h-12 rounded-xl bg-background border-border text-body"
             />
           </div>
@@ -136,9 +139,10 @@ export default function LoginPage() {
 
           <Button
             onClick={handleLogin}
+            disabled={isLoggingIn}
             className="w-full h-12 rounded-xl text-body font-semibold btn-press bg-foreground text-background hover:bg-foreground/90"
           >
-            로그인
+            {isLoggingIn ? '로그인 중...' : '로그인'}
           </Button>
         </motion.div>
 
