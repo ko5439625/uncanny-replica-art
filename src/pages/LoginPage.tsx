@@ -24,10 +24,19 @@ const WELCOME_MESSAGES = [
 
 export default function LoginPage() {
   const navigate = useNavigate();
-  const { data, login } = useApp();
+  const { data, login, loading } = useApp();
   const [selectedUserId, setSelectedUserId] = useState<string>('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background flex flex-col items-center justify-center">
+        <div className="text-6xl mb-4 animate-bounce">💬</div>
+        <p className="text-muted-foreground">로딩 중...</p>
+      </div>
+    );
+  }
 
   const handleLogin = () => {
     if (!selectedUserId) {

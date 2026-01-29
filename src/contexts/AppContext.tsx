@@ -1,12 +1,12 @@
 import React, { createContext, useContext, ReactNode } from 'react';
-import { useAppStore } from '@/hooks/useAppStore';
+import { useSupabaseStore } from '@/hooks/useSupabaseStore';
 
-type AppStoreReturn = ReturnType<typeof useAppStore>;
+type AppStoreReturn = ReturnType<typeof useSupabaseStore>;
 
 const AppContext = createContext<AppStoreReturn | null>(null);
 
 export function AppProvider({ children }: { children: ReactNode }) {
-  const store = useAppStore();
+  const store = useSupabaseStore();
   return <AppContext.Provider value={store}>{children}</AppContext.Provider>;
 }
 

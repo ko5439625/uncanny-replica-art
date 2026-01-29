@@ -4,6 +4,7 @@ import Calendar from '@/components/Calendar';
 import BalanceGame from '@/components/BalanceGame';
 import RulesList from '@/components/RulesList';
 import AnnouncementBanner from '@/components/AnnouncementBanner';
+import { useApp } from '@/contexts/AppContext';
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -19,6 +20,16 @@ const itemVariants = {
 };
 
 export default function MainPage() {
+  const { loading } = useApp();
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background flex flex-col items-center justify-center">
+        <div className="text-6xl mb-4 animate-bounce">💬</div>
+        <p className="text-muted-foreground">로딩 중...</p>
+      </div>
+    );
+  }
   return (
     <div className="min-h-screen bg-background">
       <Header />
