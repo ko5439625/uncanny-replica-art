@@ -14,7 +14,309 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      announcement: {
+        Row: {
+          id: number
+          text: string
+          updated_at: string
+          visible: boolean
+        }
+        Insert: {
+          id?: number
+          text?: string
+          updated_at?: string
+          visible?: boolean
+        }
+        Update: {
+          id?: number
+          text?: string
+          updated_at?: string
+          visible?: boolean
+        }
+        Relationships: []
+      }
+      anonymous_post_likes: {
+        Row: {
+          created_at: string
+          id: string
+          post_id: number
+          user_id: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          post_id: number
+          user_id: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          post_id?: number
+          user_id?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "anonymous_post_likes_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "anonymous_posts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "anonymous_post_likes_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      anonymous_posts: {
+        Row: {
+          author_id: number
+          content: string
+          created_at: string
+          id: number
+        }
+        Insert: {
+          author_id: number
+          content: string
+          created_at?: string
+          id?: number
+        }
+        Update: {
+          author_id?: number
+          content?: string
+          created_at?: string
+          id?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "anonymous_posts_author_id_fkey"
+            columns: ["author_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      availability: {
+        Row: {
+          created_at: string
+          date: string
+          id: string
+          user_id: number
+        }
+        Insert: {
+          created_at?: string
+          date: string
+          id?: string
+          user_id: number
+        }
+        Update: {
+          created_at?: string
+          date?: string
+          id?: string
+          user_id?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "availability_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      balance_games: {
+        Row: {
+          created_at: string
+          ended_at: string | null
+          id: number
+          is_active: boolean
+          option_a: string
+          option_b: string
+        }
+        Insert: {
+          created_at?: string
+          ended_at?: string | null
+          id?: number
+          is_active?: boolean
+          option_a: string
+          option_b: string
+        }
+        Update: {
+          created_at?: string
+          ended_at?: string | null
+          id?: number
+          is_active?: boolean
+          option_a?: string
+          option_b?: string
+        }
+        Relationships: []
+      }
+      balance_votes: {
+        Row: {
+          created_at: string
+          game_id: number
+          id: string
+          user_id: number
+          vote: string
+        }
+        Insert: {
+          created_at?: string
+          game_id: number
+          id?: string
+          user_id: number
+          vote: string
+        }
+        Update: {
+          created_at?: string
+          game_id?: number
+          id?: string
+          user_id?: number
+          vote?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "balance_votes_game_id_fkey"
+            columns: ["game_id"]
+            isOneToOne: false
+            referencedRelation: "balance_games"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "balance_votes_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      rules: {
+        Row: {
+          created_at: string
+          id: number
+          order_num: number
+          text: string
+          visible: boolean
+        }
+        Insert: {
+          created_at?: string
+          id?: number
+          order_num?: number
+          text: string
+          visible?: boolean
+        }
+        Update: {
+          created_at?: string
+          id?: number
+          order_num?: number
+          text?: string
+          visible?: boolean
+        }
+        Relationships: []
+      }
+      user_post_reactions: {
+        Row: {
+          created_at: string
+          emoji: string
+          id: string
+          post_id: number
+          user_id: number
+        }
+        Insert: {
+          created_at?: string
+          emoji: string
+          id?: string
+          post_id: number
+          user_id: number
+        }
+        Update: {
+          created_at?: string
+          emoji?: string
+          id?: string
+          post_id?: number
+          user_id?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_post_reactions_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "user_posts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_post_reactions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_posts: {
+        Row: {
+          content: string
+          created_at: string
+          date: string
+          id: number
+          user_id: number
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          date: string
+          id?: number
+          user_id: number
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          date?: string
+          id?: number
+          user_id?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_posts_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      users: {
+        Row: {
+          created_at: string
+          emoji: string
+          id: number
+          is_admin: boolean
+          name: string
+          nickname: string
+        }
+        Insert: {
+          created_at?: string
+          emoji?: string
+          id?: number
+          is_admin?: boolean
+          name: string
+          nickname: string
+        }
+        Update: {
+          created_at?: string
+          emoji?: string
+          id?: number
+          is_admin?: boolean
+          name?: string
+          nickname?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

@@ -19,6 +19,7 @@ export default function SettingsPage() {
   const navigate = useNavigate();
   const {
     data,
+    loading,
     updateUser,
     addUser,
     deleteUser,
@@ -47,6 +48,15 @@ export default function SettingsPage() {
     text: data.announcement.text,
     visible: data.announcement.visible,
   });
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background flex flex-col items-center justify-center">
+        <div className="text-6xl mb-4 animate-bounce">💬</div>
+        <p className="text-muted-foreground">로딩 중...</p>
+      </div>
+    );
+  }
 
   // 관리자가 아니면 접근 불가
   if (!data.currentUser?.isAdmin) {

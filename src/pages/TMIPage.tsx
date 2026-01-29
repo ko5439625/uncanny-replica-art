@@ -45,7 +45,7 @@ function isWithinThreeDays(timestamp: string): boolean {
 }
 
 export default function TMIPage() {
-  const { data, addAnonymousPost, likeAnonymousPost, addUserPost, reactToUserPost } = useApp();
+  const { data, loading, addAnonymousPost, likeAnonymousPost, addUserPost, reactToUserPost } = useApp();
   const [activeTab, setActiveTab] = useState<Tab>('anonymous');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [newContent, setNewContent] = useState('');
@@ -56,10 +56,44 @@ export default function TMIPage() {
 
   // 익명 채팅 스크롤 하단으로
   useEffect(() => {
-    if (activeTab === 'anonymous') {
+    if (activeTab === 'anonymous' && !loading) {
       chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     }
-  }, [data.tmiPosts.anonymous.length, activeTab]);
+  }, [data.tmiPosts.anonymous.length, activeTab, loading]);
+
+  // 익명 게시물 분류 (3일 이내만 보관)
+  const { recentPosts, oldPosts } = useMemo(() => {
+    const validPosts = data.tmiPosts.anonymous.filter(p => isWithinThreeDays(p.timestamp));
+    const recent = validPosts.filter(p => !isOlderThanOneDay(p.timestamp));
+    const old = validPosts.filter(p => isOlderThanOneDay(p.timestamp));
+    
+    return {
+      recentPosts: recent.sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()),
+      oldPosts: old.sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()),
+    };
+  }, [data.tmiPosts.anonymous]);
+
+  // 모든 사용자의 게시물 (관리자 제외)
+  const postsByUser = useMemo(() => data.users
+    .filter(u => !u.isAdmin)
+    .map(user => ({
+      user,
+      posts: data.tmiPosts.byUser.filter(p => p.userId === user.id),
+    }))
+    .sort((a, b) => {
+      if (a.user.id === data.currentUser?.id) return -1;
+      if (b.user.id === data.currentUser?.id) return 1;
+      return b.posts.length - a.posts.length;
+    }), [data.users, data.tmiPosts.byUser, data.currentUser?.id]);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background flex flex-col items-center justify-center">
+        <div className="text-6xl mb-4 animate-bounce">💬</div>
+        <p className="text-muted-foreground">로딩 중...</p>
+      </div>
+    );
+  }
 
   const handleSubmitAnonymous = () => {
     if (!anonymousInput.trim()) return;
@@ -86,31 +120,6 @@ export default function TMIPage() {
         : [...prev, userId]
     );
   };
-
-  // 모든 사용자의 게시물 (관리자 제외)
-  const postsByUser = data.users
-    .filter(u => !u.isAdmin)
-    .map(user => ({
-      user,
-      posts: data.tmiPosts.byUser.filter(p => p.userId === user.id),
-    }))
-    .sort((a, b) => {
-      if (a.user.id === data.currentUser?.id) return -1;
-      if (b.user.id === data.currentUser?.id) return 1;
-      return b.posts.length - a.posts.length;
-    });
-
-  // 익명 게시물 분류 (3일 이내만 보관)
-  const { recentPosts, oldPosts } = useMemo(() => {
-    const validPosts = data.tmiPosts.anonymous.filter(p => isWithinThreeDays(p.timestamp));
-    const recent = validPosts.filter(p => !isOlderThanOneDay(p.timestamp));
-    const old = validPosts.filter(p => isOlderThanOneDay(p.timestamp));
-    
-    return {
-      recentPosts: recent.sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()),
-      oldPosts: old.sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()),
-    };
-  }, [data.tmiPosts.anonymous]);
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
