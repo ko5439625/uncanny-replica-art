@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Plus, Heart, ChevronDown, ChevronRight, Send, Clock } from 'lucide-react';
+import { Plus, Heart, ChevronDown, Send, Clock, X, User } from 'lucide-react';
 import Header from '@/components/Header';
 import { useApp } from '@/contexts/AppContext';
 import { cn } from '@/lib/utils';
@@ -18,12 +18,13 @@ type Tab = 'anonymous' | 'nickname';
 
 const ONE_DAY_MS = 24 * 60 * 60 * 1000;
 const THREE_DAYS_MS = 3 * ONE_DAY_MS;
+const POSTS_PER_PAGE = 10;
 
 function formatTimeAgo(timestamp: string): string {
   const diff = Date.now() - new Date(timestamp).getTime();
   const hours = Math.floor(diff / (1000 * 60 * 60));
   const minutes = Math.floor(diff / (1000 * 60));
-  
+
   if (hours > 24) {
     return `${Math.floor(hours / 24)}일 전`;
   }
@@ -49,9 +50,10 @@ export default function TMIPage() {
   const [activeTab, setActiveTab] = useState<Tab>('anonymous');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [newContent, setNewContent] = useState('');
-  const [expandedUsers, setExpandedUsers] = useState<number[]>([]);
   const [anonymousInput, setAnonymousInput] = useState('');
   const [showOldMessages, setShowOldMessages] = useState(false);
+  const [visibleCount, setVisibleCount] = useState(POSTS_PER_PAGE);
+  const [personalPopupUser, setPersonalPopupUser] = useState<number | null>(null);
   const chatEndRef = useRef<HTMLDivElement>(null);
 
   // 익명 채팅 스크롤 하단으로
@@ -61,30 +63,47 @@ export default function TMIPage() {
     }
   }, [data.tmiPosts.anonymous.length, activeTab, loading]);
 
+  // 탭 변경 시 visible count 초기화
+  useEffect(() => {
+    setVisibleCount(POSTS_PER_PAGE);
+  }, [activeTab]);
+
   // 익명 게시물 분류 (3일 이내만 보관)
   const { recentPosts, oldPosts } = useMemo(() => {
     const validPosts = data.tmiPosts.anonymous.filter(p => isWithinThreeDays(p.timestamp));
     const recent = validPosts.filter(p => !isOlderThanOneDay(p.timestamp));
     const old = validPosts.filter(p => isOlderThanOneDay(p.timestamp));
-    
+
     return {
       recentPosts: recent.sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()),
       oldPosts: old.sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()),
     };
   }, [data.tmiPosts.anonymous]);
 
-  // 모든 사용자의 게시물 (관리자 제외)
-  const postsByUser = useMemo(() => data.users
-    .filter(u => !u.isAdmin)
-    .map(user => ({
-      user,
-      posts: data.tmiPosts.byUser.filter(p => p.userId === user.id),
-    }))
-    .sort((a, b) => {
-      if (a.user.id === data.currentUser?.id) return -1;
-      if (b.user.id === data.currentUser?.id) return 1;
-      return b.posts.length - a.posts.length;
-    }), [data.users, data.tmiPosts.byUser, data.currentUser?.id]);
+  // 전체 피드: 최신순 정렬
+  const allPostsFeed = useMemo(() => {
+    return data.tmiPosts.byUser
+      .map(post => {
+        const user = data.users.find(u => u.id === post.userId);
+        return { ...post, user };
+      })
+      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime() || b.id - a.id);
+  }, [data.tmiPosts.byUser, data.users]);
+
+  // 개인 팝업용 게시물
+  const personalPosts = useMemo(() => {
+    if (personalPopupUser === null) return [];
+    return allPostsFeed.filter(p => p.userId === personalPopupUser);
+  }, [allPostsFeed, personalPopupUser]);
+
+  // 개인 공간 유저 목록 (관리자 제외)
+  const memberUsers = useMemo(() => {
+    return data.users.filter(u => !u.isAdmin);
+  }, [data.users]);
+
+  const personalPopupUserData = personalPopupUser !== null
+    ? data.users.find(u => u.id === personalPopupUser)
+    : null;
 
   if (loading) {
     return (
@@ -113,12 +132,8 @@ export default function TMIPage() {
     setIsModalOpen(false);
   };
 
-  const toggleUser = (userId: number) => {
-    setExpandedUsers(prev =>
-      prev.includes(userId)
-        ? prev.filter(id => id !== userId)
-        : [...prev, userId]
-    );
+  const handleLoadMore = () => {
+    setVisibleCount(prev => prev + POSTS_PER_PAGE);
   };
 
   return (
@@ -126,22 +141,30 @@ export default function TMIPage() {
       <Header />
 
       <main className="flex-1 max-w-3xl mx-auto w-full px-4 py-4 flex flex-col">
-        {/* Tabs */}
-        <div className="flex gap-2 mb-4">
-          {(['anonymous', 'nickname'] as Tab[]).map(tab => (
-            <button
-              key={tab}
-              onClick={() => setActiveTab(tab)}
-              className={cn(
-                'px-4 py-2 rounded-lg text-body font-medium transition-all border',
-                activeTab === tab
-                  ? 'bg-foreground text-background border-foreground'
-                  : 'bg-background text-muted-foreground border-border hover:border-foreground'
-              )}
-            >
-              {tab === 'anonymous' ? '익명 채팅' : '닉네임'}
-            </button>
-          ))}
+        {/* Tabs - Apple 세그먼트 스타일 */}
+        <div className="flex gap-1 p-1 mb-4 bg-secondary/70 rounded-xl">
+          <button
+            onClick={() => setActiveTab('anonymous')}
+            className={cn(
+              'flex-1 px-4 py-2 rounded-lg text-body font-medium transition-all',
+              activeTab === 'anonymous'
+                ? 'bg-background text-foreground shadow-sm'
+                : 'text-muted-foreground hover:text-foreground'
+            )}
+          >
+            익명 채팅
+          </button>
+          <button
+            onClick={() => setActiveTab('nickname')}
+            className={cn(
+              'flex-1 px-4 py-2 rounded-lg text-body font-medium transition-all',
+              activeTab === 'nickname'
+                ? 'bg-background text-foreground shadow-sm'
+                : 'text-muted-foreground hover:text-foreground'
+            )}
+          >
+            닉네임
+          </button>
         </div>
 
         {/* Content */}
@@ -247,103 +270,99 @@ export default function TMIPage() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="space-y-3"
+              className="space-y-4"
             >
+              {/* 개인 공간 - 이름 링크 */}
+              <div className="flex flex-wrap gap-2 pb-3 border-b border-border">
+                {memberUsers.map(user => (
+                  <button
+                    key={user.id}
+                    onClick={() => setPersonalPopupUser(user.id)}
+                    className="px-3 py-1.5 rounded-full text-small font-medium bg-secondary hover:bg-foreground hover:text-background transition-colors"
+                  >
+                    {user.emoji} {user.nickname}
+                    {data.currentUser?.id === user.id && <span className="ml-1 opacity-60">(나)</span>}
+                  </button>
+                ))}
+              </div>
+
               {/* Write Button */}
               <Button
                 onClick={() => setIsModalOpen(true)}
-                className="w-full rounded-lg gap-2 mb-4"
+                className="w-full rounded-lg gap-2"
               >
                 <Plus className="w-4 h-4" />
                 TMI 쓰기
               </Button>
 
-              {/* All Users List */}
-              {postsByUser.map(({ user, posts }) => {
-                const isExpanded = expandedUsers.includes(user.id);
-                const isCurrentUser = data.currentUser?.id === user.id;
-
-                return (
-                  <div key={user.id} className="border border-border rounded-xl overflow-hidden">
-                    <button
-                      onClick={() => toggleUser(user.id)}
-                      className="w-full flex items-center justify-between p-4 hover:bg-secondary transition-colors"
-                    >
-                      <div className="flex items-center gap-3">
-                        {isExpanded ? (
-                          <ChevronDown className="w-5 h-5 text-muted-foreground" />
-                        ) : (
-                          <ChevronRight className="w-5 h-5 text-muted-foreground" />
-                        )}
-                        <span className="text-2xl">{user.emoji}</span>
-                        <span className="text-body font-medium">
-                          {user.nickname}
-                          {isCurrentUser && <span className="text-muted-foreground ml-1">(나)</span>}
-                        </span>
-                        <span className="px-2 py-0.5 bg-secondary rounded text-small text-muted-foreground">
-                          {posts.length}개
-                        </span>
-                      </div>
-                    </button>
-
-                    <AnimatePresence>
-                      {isExpanded && (
-                        <motion.div
-                          initial={{ height: 0, opacity: 0 }}
-                          animate={{ height: 'auto', opacity: 1 }}
-                          exit={{ height: 0, opacity: 0 }}
-                          className="border-t border-border"
-                        >
-                          {posts.length === 0 ? (
-                            <div className="p-6 text-center">
-                              <p className="text-caption text-muted-foreground">
-                                아직 TMI가 없어요
-                              </p>
-                            </div>
-                          ) : (
-                            <div className="divide-y divide-border">
-                              {posts.map(post => (
-                                <div key={post.id} className="p-4">
-                                  <p className="text-small text-muted-foreground mb-2">
-                                    {post.date}
-                                  </p>
-                                  <p className="text-body text-foreground mb-3 leading-relaxed">
-                                    {post.content}
-                                  </p>
-                                  <div className="flex gap-2 flex-wrap">
-                                    {(['👍', '🔥', '😂', '❤️'] as const).map(emoji => {
-                                      const count = post.reactions[emoji].length;
-                                      const hasReacted = data.currentUser
-                                        ? post.reactions[emoji].includes(data.currentUser.id)
-                                        : false;
-
-                                      return (
-                                        <button
-                                          key={emoji}
-                                          onClick={() => reactToUserPost(post.id, emoji)}
-                                          className={cn(
-                                            'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-caption transition-colors border',
-                                            hasReacted
-                                              ? 'bg-foreground text-background border-foreground'
-                                              : 'bg-background text-muted-foreground border-border hover:border-foreground'
-                                          )}
-                                        >
-                                          <span>{emoji}</span>
-                                          {count > 0 && <span className="font-medium">{count}</span>}
-                                        </button>
-                                      );
-                                    })}
-                                  </div>
-                                </div>
-                              ))}
-                            </div>
-                          )}
-                        </motion.div>
-                      )}
-                    </AnimatePresence>
+              {/* 쓰레드형 피드 - 최신순 */}
+              <div className="space-y-3">
+                {allPostsFeed.length === 0 ? (
+                  <div className="py-12 text-center">
+                    <p className="text-muted-foreground">아직 TMI가 없어요</p>
                   </div>
-                );
-              })}
+                ) : (
+                  <>
+                    {allPostsFeed.slice(0, visibleCount).map(post => (
+                      <motion.div
+                        key={post.id}
+                        initial={{ opacity: 0, y: 8 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="border border-border rounded-xl p-4"
+                      >
+                        {/* 작성자 헤더 */}
+                        <div className="flex items-center gap-2 mb-2">
+                          <span className="text-lg">{post.user?.emoji}</span>
+                          <span className="text-body font-semibold">{post.user?.nickname || '알 수 없음'}</span>
+                          <span className="text-small text-muted-foreground ml-auto">{post.date}</span>
+                        </div>
+
+                        {/* 내용 */}
+                        <p className="text-body text-foreground leading-relaxed mb-3">
+                          {post.content}
+                        </p>
+
+                        {/* 리액션 */}
+                        <div className="flex gap-2 flex-wrap">
+                          {(['👍', '🔥', '😂', '❤️'] as const).map(emoji => {
+                            const count = post.reactions[emoji].length;
+                            const hasReacted = data.currentUser
+                              ? post.reactions[emoji].includes(data.currentUser.id)
+                              : false;
+
+                            return (
+                              <button
+                                key={emoji}
+                                onClick={() => reactToUserPost(post.id, emoji)}
+                                className={cn(
+                                  'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-caption transition-colors border',
+                                  hasReacted
+                                    ? 'bg-foreground text-background border-foreground'
+                                    : 'bg-background text-muted-foreground border-border hover:border-foreground'
+                                )}
+                              >
+                                <span>{emoji}</span>
+                                {count > 0 && <span className="font-medium">{count}</span>}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </motion.div>
+                    ))}
+
+                    {/* 더보기 버튼 */}
+                    {visibleCount < allPostsFeed.length && (
+                      <Button
+                        variant="outline"
+                        onClick={handleLoadMore}
+                        className="w-full rounded-lg"
+                      >
+                        더보기 ({allPostsFeed.length - visibleCount}개 남음)
+                      </Button>
+                    )}
+                  </>
+                )}
+              </div>
             </motion.div>
           )}
         </AnimatePresence>
@@ -388,6 +407,56 @@ export default function TMIPage() {
         </DialogContent>
       </Dialog>
 
+      {/* 개인 공간 팝업 */}
+      <Dialog open={personalPopupUser !== null} onOpenChange={(open) => !open && setPersonalPopupUser(null)}>
+        <DialogContent className="rounded-xl max-w-md mx-4 bg-background border-border max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-bold flex items-center gap-2">
+              <span className="text-2xl">{personalPopupUserData?.emoji}</span>
+              {personalPopupUserData?.nickname}의 TMI
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3">
+            {personalPosts.length === 0 ? (
+              <div className="py-8 text-center">
+                <p className="text-muted-foreground">아직 TMI가 없어요</p>
+              </div>
+            ) : (
+              personalPosts.map(post => (
+                <div key={post.id} className="border border-border rounded-lg p-3">
+                  <p className="text-small text-muted-foreground mb-1.5">{post.date}</p>
+                  <p className="text-body text-foreground leading-relaxed mb-2">{post.content}</p>
+                  <div className="flex gap-2 flex-wrap">
+                    {(['👍', '🔥', '😂', '❤️'] as const).map(emoji => {
+                      const count = post.reactions[emoji].length;
+                      const hasReacted = data.currentUser
+                        ? post.reactions[emoji].includes(data.currentUser.id)
+                        : false;
+
+                      return (
+                        <button
+                          key={emoji}
+                          onClick={() => reactToUserPost(post.id, emoji)}
+                          className={cn(
+                            'flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-caption transition-colors border',
+                            hasReacted
+                              ? 'bg-foreground text-background border-foreground'
+                              : 'bg-background text-muted-foreground border-border hover:border-foreground'
+                          )}
+                        >
+                          <span>{emoji}</span>
+                          {count > 0 && <span className="font-medium">{count}</span>}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
+
       {/* Footer */}
       <footer className="border-t border-border py-4 mt-auto">
         <div className="max-w-3xl mx-auto px-4 text-center">
@@ -399,13 +468,13 @@ export default function TMIPage() {
 }
 
 // 메시지 버블 컴포넌트
-function MessageBubble({ 
-  post, 
-  isMyPost, 
-  hasLiked, 
+function MessageBubble({
+  post,
+  isMyPost,
+  hasLiked,
   onLike,
-  isOld = false 
-}: { 
+  isOld = false
+}: {
   post: { id: number; content: string; timestamp: string; likes: number };
   isMyPost: boolean;
   hasLiked: boolean;
@@ -422,8 +491,8 @@ function MessageBubble({
       <div className={cn('max-w-[80%] group', isMyPost ? 'items-end' : 'items-start')}>
         <div className={cn(
           'px-4 py-2.5 rounded-2xl',
-          isMyPost 
-            ? 'bg-[hsl(var(--imessage-blue))] text-white rounded-br-md' 
+          isMyPost
+            ? 'bg-[hsl(var(--imessage-blue))] text-white rounded-br-md'
             : 'bg-[hsl(var(--imessage-gray))] text-foreground rounded-bl-md'
         )}>
           <p className="text-body leading-relaxed">{post.content}</p>

@@ -6,12 +6,12 @@ import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 
 const DAYS = ['일', '월', '화', '수', '목', '금', '토'];
-const MIN_MONTH = new Date(2025, 1); // Feb 2025
-const MAX_MONTH = new Date(2025, 5); // Jun 2025
+const MIN_MONTH = new Date(2026, 1); // Feb 2026
+const MAX_MONTH = new Date(2026, 5); // Jun 2026
 
 export default function Calendar() {
   const { data, toggleAvailability } = useApp();
-  const [currentDate, setCurrentDate] = useState(new Date(2025, 1)); // Feb 2025
+  const [currentDate, setCurrentDate] = useState(new Date(2026, 1)); // Feb 2026
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
 
   const year = currentDate.getFullYear();
