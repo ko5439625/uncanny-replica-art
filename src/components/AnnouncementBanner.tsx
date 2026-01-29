@@ -16,7 +16,7 @@ export default function AnnouncementBanner() {
       initial={{ opacity: 0, y: -10 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -10 }}
-      className="bg-foreground text-background rounded-xl p-4 relative"
+      className="bg-sky-100/70 text-sky-900 dark:bg-sky-900/30 dark:text-sky-100 rounded-xl p-4 relative"
     >
       <button
         onClick={handleDismiss}
