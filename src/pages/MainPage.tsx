@@ -1,5 +1,4 @@
 import { motion } from 'framer-motion';
-import Header from '@/components/Header';
 import Calendar from '@/components/Calendar';
 import BalanceGame from '@/components/BalanceGame';
 import RulesList from '@/components/RulesList';
@@ -32,7 +31,6 @@ export default function MainPage() {
   }
   return (
     <div className="min-h-screen bg-background">
-      <Header />
       
       <motion.main
         variants={containerVariants}

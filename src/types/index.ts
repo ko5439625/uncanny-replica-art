@@ -45,6 +45,14 @@ export interface UserPost {
   };
 }
 
+export interface MeetingRecord {
+  id: number;
+  meetingNumber: number;
+  userId: number;
+  content: string;
+  createdAt: string;
+}
+
 export interface Announcement {
   text: string;
   visible: boolean;
@@ -63,6 +71,7 @@ export interface AppData {
     anonymous: AnonymousPost[];
     byUser: UserPost[];
   };
+  meetingRecords: MeetingRecord[];
   announcement: Announcement;
 }
 
@@ -146,6 +155,7 @@ export const INITIAL_DATA: AppData = {
       },
     ],
   },
+  meetingRecords: [],
   announcement: {
     text: "이번 주 토요일 정모 있습니다! 🎉",
     visible: true,

@@ -195,6 +195,38 @@ export type Database = {
           },
         ]
       }
+      meeting_records: {
+        Row: {
+          content: string
+          created_at: string | null
+          id: number
+          meeting_number: number
+          user_id: number
+        }
+        Insert: {
+          content: string
+          created_at?: string | null
+          id?: number
+          meeting_number: number
+          user_id: number
+        }
+        Update: {
+          content?: string
+          created_at?: string | null
+          id?: number
+          meeting_number?: number
+          user_id?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "meeting_records_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       rules: {
         Row: {
           created_at: string
