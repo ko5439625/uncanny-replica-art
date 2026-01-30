@@ -1,7 +1,6 @@
 import { useState, useRef, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Plus, Heart, ChevronDown, Send, Clock, Trash2 } from 'lucide-react';
-import Header from '@/components/Header';
 import { useApp } from '@/contexts/AppContext';
 import { cn } from '@/lib/utils';
 import {
@@ -138,8 +137,6 @@ export default function TMIPage() {
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
-      <Header />
-
       <main className="flex-1 max-w-3xl mx-auto w-full px-4 py-4 flex flex-col">
         {/* Tabs - Apple 세그먼트 스타일 */}
         <div className="flex gap-1 p-1 mb-4 bg-secondary/70 rounded-xl">

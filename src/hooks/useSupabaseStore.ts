@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { User, Rule, AppData, ADMIN_USER, INITIAL_DATA } from '@/types';
+import { User, Rule, AppData, MeetingRecord, INITIAL_DATA } from '@/types';
 
 const CURRENT_USER_KEY = 'smalltalk-current-user';
 
@@ -67,6 +67,14 @@ interface DbAnnouncement {
   visible: boolean;
 }
 
+interface DbMeetingRecord {
+  id: number;
+  meeting_number: number;
+  user_id: number;
+  content: string;
+  created_at: string;
+}
+
 export function useSupabaseStore() {
   const [data, setData] = useState<AppData>(INITIAL_DATA);
   const [loading, setLoading] = useState(true);
@@ -98,6 +106,7 @@ export function useSupabaseStore() {
         userReactionsRes,
         announcementRes,
         availabilityRes,
+        meetingRecordsRes,
       ] = await Promise.all([
         supabase.from('users').select('*').order('id'),
         supabase.from('rules').select('*').order('order_num'),
@@ -109,6 +118,7 @@ export function useSupabaseStore() {
         supabase.from('user_post_reactions').select('*'),
         supabase.from('announcement').select('*').limit(1),
         supabase.from('availability').select('*'),
+        supabase.from('meeting_records').select('*').order('created_at', { ascending: true }),
       ]);
 
       const users: User[] = (usersRes.data as DbUser[] || []).map(u => ({
@@ -145,6 +155,15 @@ export function useSupabaseStore() {
         if (!availability[a.date]) availability[a.date] = [];
         availability[a.date].push(a.user_id);
       });
+
+      const meetingRecordsData = meetingRecordsRes.data as DbMeetingRecord[] || [];
+      const meetingRecords: MeetingRecord[] = meetingRecordsData.map(r => ({
+        id: r.id,
+        meetingNumber: r.meeting_number,
+        userId: r.user_id,
+        content: r.content,
+        createdAt: r.created_at,
+      }));
 
       setData(prev => ({
         users,
@@ -192,6 +211,7 @@ export function useSupabaseStore() {
             },
           })),
         },
+        meetingRecords,
         announcement: announcement ? {
           text: announcement.text,
           visible: announcement.visible,
@@ -376,6 +396,23 @@ export function useSupabaseStore() {
     loadData();
   }, [data.currentUser, loadData]);
 
+  // Meeting Records
+  const addMeetingRecord = useCallback(async (meetingNumber: number, content: string) => {
+    if (!data.currentUser) return;
+    await supabase.from('meeting_records').insert({
+      meeting_number: meetingNumber,
+      user_id: data.currentUser.id,
+      content,
+    });
+    loadData();
+  }, [data.currentUser, loadData]);
+
+  const deleteMeetingRecord = useCallback(async (recordId: number) => {
+    if (!data.currentUser) return;
+    await supabase.from('meeting_records').delete().eq('id', recordId).eq('user_id', data.currentUser.id);
+    loadData();
+  }, [data.currentUser, loadData]);
+
   // Announcement
   const updateAnnouncement = useCallback(async (text: string, visible: boolean) => {
     await supabase.from('announcement').update({ text, visible, updated_at: new Date().toISOString() }).eq('id', 1);
@@ -445,6 +482,8 @@ export function useSupabaseStore() {
     addUserPost,
     deleteUserPost,
     reactToUserPost,
+    addMeetingRecord,
+    deleteMeetingRecord,
     updateAnnouncement,
     updateUser,
     addUser,
