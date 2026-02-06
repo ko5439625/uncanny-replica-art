@@ -229,6 +229,8 @@ function LadderGame({ members }: { members: Member[] }) {
   const [isAnimating, setIsAnimating] = useState(false);
   const [winnerCount, setWinnerCount] = useState(1);
   const [winnerSlots, setWinnerSlots] = useState<Set<number>>(new Set());
+  const [revealedSlots, setRevealedSlots] = useState<Set<number>>(new Set());
+  const [allRevealed, setAllRevealed] = useState(false);
 
   const count = members.length;
   const canvasWidth = Math.max(count * 60, 320);
@@ -322,9 +324,7 @@ function LadderGame({ members }: { members: Member[] }) {
     setTimeout(() => {
       setRunning(false);
       setRevealed(true);
-      const winners = Array.from(slots).map(slot => shuffledResults[slot]);
-      const winnerNames = winners.map(w => `${w.emoji} ${w.nickname}`).join(', ');
-      toast.success(`당첨: ${winnerNames} 🎉`);
+      toast('이름을 클릭해서 결과를 확인하세요! 👆');
     }, 800);
   }, [running, count, members, generateLines, traceLadder, winnerCount]);
 
@@ -343,6 +343,16 @@ function LadderGame({ members }: { members: Member[] }) {
 
     if (animatedPathLen >= tracePath.length) {
       setIsAnimating(false);
+      // Reveal the end slot for this runner
+      if (selectedRunner !== null) {
+        const { endIdx } = traceLadder(selectedRunner, lines);
+        setRevealedSlots(prev => new Set(prev).add(endIdx));
+        const isWin = winnerSlots.has(endIdx);
+        const member = results[endIdx];
+        if (member) {
+          toast(isWin ? `🎉 ${member.emoji} ${member.nickname} 당첨!` : `${member.emoji} ${member.nickname} 통과!`);
+        }
+      }
       return;
     }
 
@@ -419,6 +429,17 @@ function LadderGame({ members }: { members: Member[] }) {
     setAnimatedPathLen(0);
     setIsAnimating(false);
     setWinnerSlots(new Set());
+    setRevealedSlots(new Set());
+    setAllRevealed(false);
+  };
+
+  const revealAll = () => {
+    const allSlots = new Set(Array.from({ length: count }, (_, i) => i));
+    setRevealedSlots(allSlots);
+    setAllRevealed(true);
+    const winners = Array.from(winnerSlots).map(slot => results[slot]);
+    const winnerNames = winners.filter(Boolean).map(w => `${w.emoji} ${w.nickname}`).join(', ');
+    toast.success(`당첨: ${winnerNames} 🎉`);
   };
 
   return (
@@ -459,17 +480,18 @@ function LadderGame({ members }: { members: Member[] }) {
         />
       </div>
 
-      {/* Bottom labels: 당첨 / 통과 */}
+      {/* Bottom labels: 당첨 / 통과 - revealed per slot */}
       <div className="flex justify-center w-full overflow-x-auto">
         <div className="flex" style={{ width: canvasWidth }}>
           {Array.from({ length: count }).map((_, i) => {
             const isWinner = winnerSlots.has(i);
+            const isSlotRevealed = revealedSlots.has(i) || allRevealed;
             return (
               <div key={i} style={{ width: gap }} className="flex flex-col items-center gap-0.5 text-center">
-                {revealed ? (
+                {revealed && isSlotRevealed ? (
                   <motion.div
-                    initial={{ opacity: 0, y: -5 }}
-                    animate={{ opacity: 1, y: 0 }}
+                    initial={{ opacity: 0, scale: 0.8 }}
+                    animate={{ opacity: 1, scale: 1 }}
                     className="flex flex-col items-center"
                   >
                     <span className={cn(
@@ -487,13 +509,25 @@ function LadderGame({ members }: { members: Member[] }) {
                     )}
                   </motion.div>
                 ) : (
-                  <span className="text-lg">❓</span>
+                  <span className="text-lg">{revealed ? '❓' : '❓'}</span>
                 )}
               </div>
             );
           })}
         </div>
       </div>
+
+      {/* Reveal All Button */}
+      {revealed && !allRevealed && (
+        <Button
+          variant="outline"
+          onClick={revealAll}
+          className="rounded-xl"
+          disabled={isAnimating}
+        >
+          👀 전체보기
+        </Button>
+      )}
 
       {/* Winner Count Selector */}
       <div className="flex items-center gap-3 px-4 py-2 bg-secondary/50 rounded-xl">
