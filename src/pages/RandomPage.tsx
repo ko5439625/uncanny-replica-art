@@ -225,6 +225,8 @@ function LadderGame({ members }: { members: Member[] }) {
   const [lines, setLines] = useState<LadderLine[]>([]);
   const [selectedRunner, setSelectedRunner] = useState<number | null>(null);
   const [tracePath, setTracePath] = useState<{x: number, y: number}[]>([]);
+  const [animatedPathLen, setAnimatedPathLen] = useState(0);
+  const [isAnimating, setIsAnimating] = useState(false);
   const [winnerCount, setWinnerCount] = useState(1);
   const [winnerSlots, setWinnerSlots] = useState<Set<number>>(new Set());
 
@@ -327,11 +329,29 @@ function LadderGame({ members }: { members: Member[] }) {
   }, [running, count, members, generateLines, traceLadder, winnerCount]);
 
   const handleSelectRunner = (idx: number) => {
-    if (!revealed) return;
+    if (!revealed || isAnimating) return;
     setSelectedRunner(idx);
     const { path } = traceLadder(idx, lines);
     setTracePath(path);
+    setAnimatedPathLen(0);
+    setIsAnimating(true);
   };
+
+  // Animate the path drawing progressively
+  useEffect(() => {
+    if (!isAnimating || tracePath.length === 0) return;
+
+    if (animatedPathLen >= tracePath.length) {
+      setIsAnimating(false);
+      return;
+    }
+
+    const timer = setTimeout(() => {
+      setAnimatedPathLen(prev => prev + 1);
+    }, 60);
+
+    return () => clearTimeout(timer);
+  }, [isAnimating, animatedPathLen, tracePath.length]);
 
   // Draw ladder
   useEffect(() => {
@@ -365,20 +385,30 @@ function LadderGame({ members }: { members: Member[] }) {
       ctx.stroke();
     }
 
-    // Draw traced path
-    if (tracePath.length > 1) {
+    // Draw traced path (animated)
+    if (tracePath.length > 1 && animatedPathLen > 0) {
+      const drawLen = Math.min(animatedPathLen, tracePath.length);
       ctx.strokeStyle = COLORS[selectedRunner! % COLORS.length];
       ctx.lineWidth = 4;
       ctx.lineCap = 'round';
       ctx.lineJoin = 'round';
       ctx.beginPath();
       ctx.moveTo(tracePath[0].x, tracePath[0].y);
-      for (let i = 1; i < tracePath.length; i++) {
+      for (let i = 1; i < drawLen; i++) {
         ctx.lineTo(tracePath[i].x, tracePath[i].y);
       }
       ctx.stroke();
+
+      // Draw a dot at the current position
+      if (drawLen > 0 && drawLen < tracePath.length) {
+        const pos = tracePath[drawLen - 1];
+        ctx.fillStyle = COLORS[selectedRunner! % COLORS.length];
+        ctx.beginPath();
+        ctx.arc(pos.x, pos.y, 6, 0, Math.PI * 2);
+        ctx.fill();
+      }
     }
-  }, [lines, tracePath, selectedRunner, count, gap, topY, bottomY, canvasWidth, canvasHeight]);
+  }, [lines, tracePath, animatedPathLen, selectedRunner, count, gap, topY, bottomY, canvasWidth, canvasHeight]);
 
   const reset = () => {
     setLines([]);
@@ -386,9 +416,9 @@ function LadderGame({ members }: { members: Member[] }) {
     setRevealed(false);
     setSelectedRunner(null);
     setTracePath([]);
+    setAnimatedPathLen(0);
+    setIsAnimating(false);
     setWinnerSlots(new Set());
-    setSelectedRunner(null);
-    setTracePath([]);
   };
 
   return (
