@@ -225,6 +225,8 @@ function LadderGame({ members }: { members: Member[] }) {
   const [lines, setLines] = useState<LadderLine[]>([]);
   const [selectedRunner, setSelectedRunner] = useState<number | null>(null);
   const [tracePath, setTracePath] = useState<{x: number, y: number}[]>([]);
+  const [winnerCount, setWinnerCount] = useState(1);
+  const [winnerSlots, setWinnerSlots] = useState<Set<number>>(new Set());
 
   const count = members.length;
   const canvasWidth = Math.max(count * 60, 320);
@@ -289,6 +291,17 @@ function LadderGame({ members }: { members: Member[] }) {
     const newLines = generateLines();
     setLines(newLines);
 
+    // Randomly pick which bottom slots are "당첨"
+    const slots = new Set<number>();
+    const available = Array.from({ length: count }, (_, i) => i);
+    const actualWinners = Math.min(winnerCount, count - 1);
+    for (let i = 0; i < actualWinners; i++) {
+      const randIdx = Math.floor(Math.random() * available.length);
+      slots.add(available[randIdx]);
+      available.splice(randIdx, 1);
+    }
+    setWinnerSlots(slots);
+
     // Compute results for all
     const shuffledResults: Member[] = new Array(count);
     const endPositions = new Map<number, number>();
@@ -307,9 +320,11 @@ function LadderGame({ members }: { members: Member[] }) {
     setTimeout(() => {
       setRunning(false);
       setRevealed(true);
-      toast.success('사다리 완성! 이름을 클릭해서 경로를 확인하세요 👀');
+      const winners = Array.from(slots).map(slot => shuffledResults[slot]);
+      const winnerNames = winners.map(w => `${w.emoji} ${w.nickname}`).join(', ');
+      toast.success(`당첨: ${winnerNames} 🎉`);
     }, 800);
-  }, [running, count, members, generateLines, traceLadder]);
+  }, [running, count, members, generateLines, traceLadder, winnerCount]);
 
   const handleSelectRunner = (idx: number) => {
     if (!revealed) return;
@@ -371,6 +386,9 @@ function LadderGame({ members }: { members: Member[] }) {
     setRevealed(false);
     setSelectedRunner(null);
     setTracePath([]);
+    setWinnerSlots(new Set());
+    setSelectedRunner(null);
+    setTracePath([]);
   };
 
   return (
@@ -411,26 +429,63 @@ function LadderGame({ members }: { members: Member[] }) {
         />
       </div>
 
-      {/* Bottom results */}
+      {/* Bottom labels: 당첨 / 통과 */}
       <div className="flex justify-center w-full overflow-x-auto">
         <div className="flex" style={{ width: canvasWidth }}>
-          {Array.from({ length: count }).map((_, i) => (
-            <div key={i} style={{ width: gap }} className="flex flex-col items-center gap-0.5 text-center">
-              {revealed && results[i] ? (
-                <motion.div
-                  initial={{ opacity: 0, y: -5 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="flex flex-col items-center"
-                >
-                  <span className="text-lg">{results[i].emoji}</span>
-                  <span className="text-[10px] font-medium truncate max-w-[50px]">{results[i].nickname}</span>
-                </motion.div>
-              ) : (
-                <span className="text-lg">❓</span>
-              )}
-            </div>
-          ))}
+          {Array.from({ length: count }).map((_, i) => {
+            const isWinner = winnerSlots.has(i);
+            return (
+              <div key={i} style={{ width: gap }} className="flex flex-col items-center gap-0.5 text-center">
+                {revealed ? (
+                  <motion.div
+                    initial={{ opacity: 0, y: -5 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="flex flex-col items-center"
+                  >
+                    <span className={cn(
+                      'text-xs font-bold px-2 py-1 rounded-full',
+                      isWinner
+                        ? 'bg-primary text-primary-foreground'
+                        : 'bg-secondary text-muted-foreground'
+                    )}>
+                      {isWinner ? '당첨!' : '통과'}
+                    </span>
+                    {results[i] && (
+                      <span className="text-[10px] text-muted-foreground mt-0.5 truncate max-w-[50px]">
+                        {results[i].emoji}{results[i].nickname}
+                      </span>
+                    )}
+                  </motion.div>
+                ) : (
+                  <span className="text-lg">❓</span>
+                )}
+              </div>
+            );
+          })}
         </div>
+      </div>
+
+      {/* Winner Count Selector */}
+      <div className="flex items-center gap-3 px-4 py-2 bg-secondary/50 rounded-xl">
+        <span className="text-sm text-muted-foreground">당첨자 수</span>
+        <div className="flex items-center gap-1">
+          <button
+            onClick={() => setWinnerCount(Math.max(1, winnerCount - 1))}
+            disabled={winnerCount <= 1}
+            className="w-7 h-7 rounded-lg border border-border text-sm font-bold hover:bg-secondary disabled:opacity-30"
+          >
+            −
+          </button>
+          <span className="w-8 text-center text-sm font-bold">{winnerCount}</span>
+          <button
+            onClick={() => setWinnerCount(Math.min(count - 1, winnerCount + 1))}
+            disabled={winnerCount >= count - 1}
+            className="w-7 h-7 rounded-lg border border-border text-sm font-bold hover:bg-secondary disabled:opacity-30"
+          >
+            +
+          </button>
+        </div>
+        <span className="text-xs text-muted-foreground">/ {count}명</span>
       </div>
 
       {/* Controls */}
