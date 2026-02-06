@@ -139,11 +139,11 @@ export default function Calendar() {
                       : isMostPopular
                         ? 'bg-sky-400/30 border-sky-400 text-sky-900 dark:bg-sky-500/20 dark:border-sky-500 dark:text-sky-100'
                         : count >= 5
-                          ? 'bg-sky-200/50 border-sky-300/70 text-sky-800 dark:bg-sky-800/20 dark:border-sky-700 dark:text-sky-200'
+                          ? 'bg-secondary border-border/80'
                           : count >= 3
-                            ? 'bg-sky-100/50 border-sky-200/60 dark:bg-sky-900/15 dark:border-sky-800'
+                            ? 'bg-secondary/60 border-border/50'
                             : count >= 1
-                              ? 'bg-sky-50/50 border-sky-100/50 dark:bg-sky-950/10 dark:border-sky-900/30'
+                              ? 'bg-secondary/30 border-border/30'
                               : 'border-transparent hover:border-border'
                   )}
                 >
