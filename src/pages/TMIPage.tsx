@@ -275,9 +275,9 @@ export default function TMIPage() {
                   <button
                     key={user.id}
                     onClick={() => setPersonalPopupUser(user.id)}
-                    className="px-3 py-1.5 rounded-full text-small font-medium bg-secondary hover:bg-foreground hover:text-background transition-colors"
+                     className="px-3 py-1.5 rounded-full text-small font-medium bg-secondary hover:bg-foreground hover:text-background transition-colors"
                   >
-                    {user.emoji} {user.nickname}
+                    {user.emoji} {user.nickname} ({user.name})
                     {data.currentUser?.id === user.id && <span className="ml-1 opacity-60">(나)</span>}
                   </button>
                 ))}
@@ -310,7 +310,10 @@ export default function TMIPage() {
                         {/* 작성자 헤더 */}
                         <div className="flex items-center gap-2 mb-2">
                           <span className="text-lg">{post.user?.emoji}</span>
-                          <span className="text-body font-semibold">{post.user?.nickname || '알 수 없음'}</span>
+                          <span className="text-body font-semibold">
+                            {post.user?.nickname || '알 수 없음'}
+                            {post.user?.name && <span className="text-muted-foreground font-normal ml-1">({post.user.name})</span>}
+                          </span>
                           <span className="text-small text-muted-foreground ml-auto">{post.date}</span>
                           {post.userId === data.currentUser?.id && (
                             <button
@@ -423,7 +426,7 @@ export default function TMIPage() {
           <DialogHeader>
             <DialogTitle className="text-xl font-bold flex items-center gap-2">
               <span className="text-2xl">{personalPopupUserData?.emoji}</span>
-              {personalPopupUserData?.nickname}의 TMI
+              {personalPopupUserData?.nickname} ({personalPopupUserData?.name})의 TMI
             </DialogTitle>
           </DialogHeader>
           <div className="space-y-3">

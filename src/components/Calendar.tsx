@@ -29,13 +29,9 @@ export default function Calendar() {
   const getDateKey = (day: number) =>
     `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
 
-  const getAvailabilityLevel = (day: number) => {
+  const getAvailabilityCount = (day: number) => {
     const dateKey = getDateKey(day);
-    const count = data.availability[dateKey]?.length || 0;
-    if (count >= 5) return 'high';
-    if (count >= 3) return 'medium';
-    if (count >= 1) return 'low';
-    return 'none';
+    return (data.availability[dateKey] || []).length;
   };
 
   const selectedAvailability = selectedDate ? data.availability[selectedDate] || [] : [];
@@ -127,7 +123,7 @@ export default function Calendar() {
 
               const dateKey = getDateKey(day);
               const isSelected = selectedDate === dateKey;
-              const level = getAvailabilityLevel(day);
+              const count = getAvailabilityCount(day);
               const availableUsers = data.availability[dateKey] || [];
               const isMostPopular = maxAttendees.has(dateKey);
 
@@ -141,12 +137,14 @@ export default function Calendar() {
                     isSelected
                       ? 'bg-foreground text-background border-foreground'
                       : isMostPopular
-                        ? 'bg-sky-100 border-sky-300 text-sky-800 dark:bg-sky-900/30 dark:border-sky-700 dark:text-sky-200'
-                        : level === 'high'
-                          ? 'bg-foreground/10 border-foreground/20'
-                          : level === 'medium'
-                            ? 'bg-secondary border-border'
-                            : 'border-transparent hover:border-border'
+                        ? 'bg-sky-400/30 border-sky-400 text-sky-900 dark:bg-sky-500/20 dark:border-sky-500 dark:text-sky-100'
+                        : count >= 5
+                          ? 'bg-sky-200/50 border-sky-300/70 text-sky-800 dark:bg-sky-800/20 dark:border-sky-700 dark:text-sky-200'
+                          : count >= 3
+                            ? 'bg-sky-100/50 border-sky-200/60 dark:bg-sky-900/15 dark:border-sky-800'
+                            : count >= 1
+                              ? 'bg-sky-50/50 border-sky-100/50 dark:bg-sky-950/10 dark:border-sky-900/30'
+                              : 'border-transparent hover:border-border'
                   )}
                 >
                   <span className="text-caption font-medium">{day}</span>
