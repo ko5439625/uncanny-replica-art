@@ -54,7 +54,10 @@ export default function AppSidebar({ onLogout, onPasswordChange }: AppSidebarPro
         <div className="px-4 mb-6">
           <div className="flex items-center gap-2 px-3 py-2 bg-secondary rounded-lg">
             <span className="text-lg">{data.currentUser.emoji}</span>
-            <span className="text-sm font-medium">{data.currentUser.nickname}</span>
+            <span className="text-sm font-medium">
+              {data.currentUser.nickname}
+              <span className="text-muted-foreground ml-1">({data.currentUser.name})</span>
+            </span>
           </div>
         </div>
       )}
@@ -124,12 +127,12 @@ export default function AppSidebar({ onLogout, onPasswordChange }: AppSidebarPro
     return (
       <>
         {/* Mobile Header */}
-        <header className="fixed top-0 left-0 right-0 z-50 bg-background/95 backdrop-blur-sm border-b border-border">
-          <div className="flex items-center justify-between px-4 py-3">
-            <div className="flex items-center gap-2">
+        <header className="fixed top-0 left-0 right-0 z-50 bg-background/95 backdrop-blur-sm border-b border-border safe-top">
+          <div className="flex items-center justify-between px-3 py-2 min-h-[48px]">
+            <div className="flex items-center gap-1.5 min-w-0 flex-1">
               <Sheet open={isOpen} onOpenChange={setIsOpen}>
                 <SheetTrigger asChild>
-                  <button className="p-2 -ml-2 text-muted-foreground hover:text-foreground">
+                  <button className="p-1.5 -ml-1 text-muted-foreground hover:text-foreground flex-shrink-0">
                     <Menu className="w-5 h-5" />
                   </button>
                 </SheetTrigger>
@@ -137,19 +140,19 @@ export default function AppSidebar({ onLogout, onPasswordChange }: AppSidebarPro
                   <SidebarContent expanded={true} />
                 </SheetContent>
               </Sheet>
-              <span className="text-xl">💬</span>
-              <span className="text-lg font-bold">잠깐, 이거 맞아?</span>
+              <span className="text-lg flex-shrink-0">💬</span>
+              <span className="text-sm font-bold truncate">잠깐, 이거 맞아?</span>
             </div>
             {data.currentUser && (
-              <div className="flex items-center gap-2 px-2 py-1 bg-secondary rounded-full">
-                <span className="text-base">{data.currentUser.emoji}</span>
-                <span className="text-xs font-medium">{data.currentUser.nickname}</span>
+              <div className="flex items-center gap-1 px-2 py-1 bg-secondary rounded-full flex-shrink-0 ml-2">
+                <span className="text-sm">{data.currentUser.emoji}</span>
+                <span className="text-xs font-medium whitespace-nowrap">{data.currentUser.nickname}</span>
               </div>
             )}
           </div>
         </header>
         {/* Spacer for fixed header */}
-        <div className="h-14" />
+        <div className="h-[48px]" />
       </>
     );
   }

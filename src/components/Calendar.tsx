@@ -43,6 +43,26 @@ export default function Calendar() {
     ? selectedAvailability.includes(data.currentUser.id)
     : false;
 
+  // Find the date(s) with the most attendees this month
+  const maxAttendees = useMemo(() => {
+    const monthStr = `${year}-${String(month + 1).padStart(2, '0')}`;
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+    let maxCount = 0;
+    const maxDates = new Set<string>();
+    for (let d = 1; d <= daysInMonth; d++) {
+      const dateKey = `${monthStr}-${String(d).padStart(2, '0')}`;
+      const count = (data.availability[dateKey] || []).length;
+      if (count > maxCount && count > 0) {
+        maxCount = count;
+        maxDates.clear();
+        maxDates.add(dateKey);
+      } else if (count === maxCount && count > 0) {
+        maxDates.add(dateKey);
+      }
+    }
+    return maxDates;
+  }, [data.availability, year, month]);
+
   // 월별 일정 요약
   const monthSummary = useMemo(() => {
     const monthStr = `${year}-${String(month + 1).padStart(2, '0')}`;
@@ -109,6 +129,7 @@ export default function Calendar() {
               const isSelected = selectedDate === dateKey;
               const level = getAvailabilityLevel(day);
               const availableUsers = data.availability[dateKey] || [];
+              const isMostPopular = maxAttendees.has(dateKey);
 
               return (
                 <motion.button
@@ -119,11 +140,13 @@ export default function Calendar() {
                     'aspect-square rounded-lg flex flex-col items-center justify-center gap-0.5 relative transition-all border',
                     isSelected
                       ? 'bg-foreground text-background border-foreground'
-                      : level === 'high'
-                        ? 'bg-foreground/10 border-foreground/20'
-                        : level === 'medium'
-                          ? 'bg-secondary border-border'
-                          : 'border-transparent hover:border-border'
+                      : isMostPopular
+                        ? 'bg-sky-100 border-sky-300 text-sky-800 dark:bg-sky-900/30 dark:border-sky-700 dark:text-sky-200'
+                        : level === 'high'
+                          ? 'bg-foreground/10 border-foreground/20'
+                          : level === 'medium'
+                            ? 'bg-secondary border-border'
+                            : 'border-transparent hover:border-border'
                   )}
                 >
                   <span className="text-caption font-medium">{day}</span>
