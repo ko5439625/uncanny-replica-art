@@ -136,8 +136,8 @@ export default function TMIPage() {
   };
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
-      <main className="flex-1 max-w-3xl mx-auto w-full px-4 py-4 flex flex-col">
+    <div className="h-[100dvh] bg-background flex flex-col overflow-hidden">
+      <main className="flex-1 max-w-3xl mx-auto w-full px-4 py-4 flex flex-col min-h-0 overflow-hidden">
         {/* Tabs - Apple 세그먼트 스타일 */}
         <div className="flex gap-1 p-1 mb-4 bg-secondary/70 rounded-xl">
           <button
@@ -175,7 +175,7 @@ export default function TMIPage() {
               className="flex-1 flex flex-col min-h-0"
             >
               {/* Chat Messages - iMessage Style */}
-              <div className="flex-1 overflow-y-auto space-y-3 pb-4 min-h-[400px] max-h-[60vh] custom-scrollbar">
+              <div className="flex-1 overflow-y-auto space-y-3 pb-4 custom-scrollbar overscroll-contain">
                 {/* Old Messages Toggle */}
                 {oldPosts.length > 0 && (
                   <button
