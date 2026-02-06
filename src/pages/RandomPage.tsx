@@ -73,10 +73,10 @@ interface Member {
 }
 
 const COLORS = [
-  'hsl(0, 70%, 60%)', 'hsl(30, 70%, 55%)', 'hsl(50, 70%, 50%)',
-  'hsl(120, 50%, 50%)', 'hsl(180, 50%, 50%)', 'hsl(210, 60%, 55%)',
-  'hsl(250, 55%, 60%)', 'hsl(280, 50%, 55%)', 'hsl(320, 55%, 55%)',
-  'hsl(350, 65%, 55%)',
+  'hsl(354, 70%, 55%)', 'hsl(25, 80%, 55%)', 'hsl(45, 85%, 50%)',
+  'hsl(145, 55%, 45%)', 'hsl(175, 55%, 45%)', 'hsl(210, 65%, 50%)',
+  'hsl(250, 55%, 55%)', 'hsl(280, 55%, 50%)', 'hsl(320, 60%, 50%)',
+  'hsl(195, 70%, 48%)',
 ];
 
 function RouletteGame({ members }: { members: Member[] }) {
@@ -118,19 +118,27 @@ function RouletteGame({ members }: { members: Member[] }) {
   const segmentAngle = 360 / members.length;
 
   return (
-    <div className="flex flex-col items-center gap-6">
+    <div className="flex flex-col items-center gap-8">
       {/* Wheel */}
-      <div className="relative w-72 h-72 sm:w-80 sm:h-80">
-        {/* Pointer */}
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-2 z-10 text-2xl">▼</div>
+      <div className="relative w-[320px] h-[320px] sm:w-[380px] sm:h-[380px]">
+        {/* Pointer - triangle */}
+        <div className="absolute top-[-8px] left-1/2 -translate-x-1/2 z-10">
+          <div className="w-0 h-0 border-l-[14px] border-r-[14px] border-t-[24px] border-l-transparent border-r-transparent border-t-foreground drop-shadow-md" />
+        </div>
+
+        {/* Outer ring glow */}
+        <div className="absolute inset-[-4px] rounded-full border-4 border-foreground/10" />
 
         {/* Wheel SVG */}
         <motion.svg
-          viewBox="0 0 300 300"
-          className="w-full h-full drop-shadow-lg"
+          viewBox="0 0 400 400"
+          className="w-full h-full drop-shadow-xl"
           animate={{ rotate: rotation }}
           transition={{ duration: 4, ease: [0.2, 0.8, 0.3, 1] }}
         >
+          {/* Outer border */}
+          <circle cx="200" cy="200" r="195" fill="none" stroke="hsl(var(--foreground))" strokeWidth="3" opacity="0.15" />
+
           {members.map((member, i) => {
             const startAngle = i * segmentAngle;
             const endAngle = (i + 1) * segmentAngle;
@@ -138,24 +146,38 @@ function RouletteGame({ members }: { members: Member[] }) {
             const endRad = (endAngle - 90) * (Math.PI / 180);
             const largeArc = segmentAngle > 180 ? 1 : 0;
 
-            const x1 = 150 + 140 * Math.cos(startRad);
-            const y1 = 150 + 140 * Math.sin(startRad);
-            const x2 = 150 + 140 * Math.cos(endRad);
-            const y2 = 150 + 140 * Math.sin(endRad);
+            const radius = 190;
+            const x1 = 200 + radius * Math.cos(startRad);
+            const y1 = 200 + radius * Math.sin(startRad);
+            const x2 = 200 + radius * Math.cos(endRad);
+            const y2 = 200 + radius * Math.sin(endRad);
 
             const midAngle = ((startAngle + endAngle) / 2 - 90) * (Math.PI / 180);
-            const textX = 150 + 95 * Math.cos(midAngle);
-            const textY = 150 + 95 * Math.sin(midAngle);
+            const emojiX = 200 + 120 * Math.cos(midAngle);
+            const emojiY = 200 + 120 * Math.sin(midAngle);
+            const textX = 200 + 148 * Math.cos(midAngle);
+            const textY = 200 + 148 * Math.sin(midAngle);
             const textRotation = (startAngle + endAngle) / 2;
 
             return (
               <g key={member.id}>
                 <path
-                  d={`M 150 150 L ${x1} ${y1} A 140 140 0 ${largeArc} 1 ${x2} ${y2} Z`}
+                  d={`M 200 200 L ${x1} ${y1} A ${radius} ${radius} 0 ${largeArc} 1 ${x2} ${y2} Z`}
                   fill={COLORS[i % COLORS.length]}
                   stroke="white"
-                  strokeWidth="2"
+                  strokeWidth="1.5"
                 />
+                {/* Emoji */}
+                <text
+                  x={emojiX}
+                  y={emojiY}
+                  textAnchor="middle"
+                  dominantBaseline="middle"
+                  fontSize="18"
+                >
+                  {member.emoji}
+                </text>
+                {/* Name */}
                 <text
                   x={textX}
                   y={textY}
@@ -164,15 +186,18 @@ function RouletteGame({ members }: { members: Member[] }) {
                   transform={`rotate(${textRotation}, ${textX}, ${textY})`}
                   fill="white"
                   fontSize="11"
-                  fontWeight="bold"
+                  fontWeight="600"
+                  style={{ textShadow: '0 1px 2px rgba(0,0,0,0.3)' }}
                 >
-                  {member.emoji}{member.nickname}
+                  {member.nickname}
                 </text>
               </g>
             );
           })}
+
           {/* Center circle */}
-          <circle cx="150" cy="150" r="20" fill="hsl(var(--background))" stroke="hsl(var(--border))" strokeWidth="2" />
+          <circle cx="200" cy="200" r="32" fill="hsl(var(--background))" stroke="hsl(var(--border))" strokeWidth="2" />
+          <text x="200" y="200" textAnchor="middle" dominantBaseline="middle" fontSize="20">🎯</text>
         </motion.svg>
       </div>
 
@@ -180,13 +205,13 @@ function RouletteGame({ members }: { members: Member[] }) {
       <AnimatePresence>
         {winner && (
           <motion.div
-            initial={{ opacity: 0, scale: 0.8 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0 }}
-            className="text-center px-6 py-4 bg-secondary rounded-xl"
+            initial={{ opacity: 0, scale: 0.5, y: 20 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.8 }}
+            className="text-center px-8 py-5 bg-secondary rounded-2xl border border-border shadow-lg"
           >
-            <p className="text-2xl font-bold">{winner.emoji} {winner.nickname}</p>
-            <p className="text-sm text-muted-foreground mt-1">당첨! 🎉</p>
+            <p className="text-3xl font-bold">{winner.emoji} {winner.nickname}</p>
+            <p className="text-sm text-muted-foreground mt-2">🎉 당첨!</p>
           </motion.div>
         )}
       </AnimatePresence>
@@ -197,12 +222,12 @@ function RouletteGame({ members }: { members: Member[] }) {
           onClick={spin}
           disabled={spinning || members.length === 0}
           size="lg"
-          className="rounded-xl px-8"
+          className="rounded-xl px-10 text-base h-12"
         >
-          {spinning ? '돌리는 중...' : '🎡 돌리기!'}
+          {spinning ? '🎡 돌리는 중...' : '🎡 돌리기!'}
         </Button>
-        <Button variant="outline" onClick={reset} size="lg" className="rounded-xl">
-          <RotateCcw className="w-4 h-4" />
+        <Button variant="outline" onClick={reset} size="lg" className="rounded-xl h-12">
+          <RotateCcw className="w-5 h-5" />
         </Button>
       </div>
     </div>
