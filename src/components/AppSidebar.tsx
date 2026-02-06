@@ -56,7 +56,9 @@ export default function AppSidebar({ onLogout, onPasswordChange }: AppSidebarPro
             <span className="text-lg">{data.currentUser.emoji}</span>
             <span className="text-sm font-medium">
               {data.currentUser.nickname}
-              <span className="text-muted-foreground ml-1">({data.currentUser.name})</span>
+              {data.currentUser.name !== data.currentUser.nickname && (
+                <span className="text-muted-foreground ml-1">({data.currentUser.name})</span>
+              )}
             </span>
           </div>
         </div>
