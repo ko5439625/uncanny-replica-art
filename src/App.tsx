@@ -12,6 +12,7 @@ import LoginPage from "./pages/LoginPage";
 import MainPage from "./pages/MainPage";
 import TMIPage from "./pages/TMIPage";
 import MeetingsPage from "./pages/MeetingsPage";
+import RandomPage from "./pages/RandomPage";
 import SettingsPage from "./pages/SettingsPage";
 import NotFound from "./pages/NotFound";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -101,6 +102,11 @@ function AppRoutes() {
       <Route path="/meetings" element={
         <ProtectedRoute>
           <AppLayout><MeetingsPage /></AppLayout>
+        </ProtectedRoute>
+      } />
+      <Route path="/random" element={
+        <ProtectedRoute>
+          <AppLayout><RandomPage /></AppLayout>
         </ProtectedRoute>
       } />
       <Route path="/settings" element={

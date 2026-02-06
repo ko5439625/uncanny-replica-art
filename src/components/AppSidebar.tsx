@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { Home, MessageCircle, BookOpen, Settings, Menu, X, LogOut, Key } from 'lucide-react';
+import { Home, MessageCircle, BookOpen, Settings, Menu, X, LogOut, Key, Dices } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useApp } from '@/contexts/AppContext';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -10,6 +10,7 @@ const NAV_ITEMS = [
   { path: '/main', label: '메인', icon: Home },
   { path: '/tmi', label: 'TMI', icon: MessageCircle },
   { path: '/meetings', label: '모임 기록장', icon: BookOpen },
+  { path: '/random', label: '랜덤 뽑기', icon: Dices, beta: true },
 ];
 
 interface AppSidebarProps {
@@ -83,8 +84,11 @@ export default function AppSidebar({ onLogout, onPasswordChange }: AppSidebarPro
             >
               <Icon className="w-5 h-5 flex-shrink-0" />
               {expanded && (
-                <span className="text-sm font-medium whitespace-nowrap overflow-hidden">
+                <span className="text-sm font-medium whitespace-nowrap overflow-hidden flex items-center gap-1.5">
                   {item.label}
+                  {'beta' in item && item.beta && (
+                    <span className="text-[9px] font-bold px-1 py-0.5 rounded bg-primary text-primary-foreground leading-none">β</span>
+                  )}
                 </span>
               )}
             </button>
